@@ -63,10 +63,9 @@ Set these project environment variables in Vercel:
 
 ```text
 PORT=8080
-Cors__AllowedOrigins__0=https://<your-frontend-domain>
 ```
 
-Set `VITE_API_BASE_URL` in the frontend project's build environment to `https://<your-api-domain>/api`. The allowed CORS origin must exactly match the browser-facing frontend origin.
+Set `VITE_API_BASE_URL` in the frontend project's build environment to `https://<your-api-domain>/api`. CORS currently allows requests from any origin for this public take-home demo, so no CORS environment variable is needed. Do not use this policy for a production API that has authentication or private data.
 
 **Demo limitation:** this deployment intentionally keeps SQLite to avoid changing the approved take-home database design. Vercel container filesystems are not persistent, and scaled instances do not share their local SQLite files. Ticket changes may disappear after an instance is replaced and different instances may show different seeded data. Do not use this deployment for durable or real customer data; use managed PostgreSQL before production.
 
@@ -88,7 +87,7 @@ The frontend reads `VITE_API_BASE_URL` when Vite starts or builds the app. By de
 VITE_API_BASE_URL=https://api.example.com/api
 ```
 
-Restart the Vite dev server after changing `.env.local`. Production builds must receive the appropriate value at build time. Because `VITE_*` values are included in browser assets, do not put secrets in them. A direct URL on another origin also requires the API to allow the frontend origin through CORS. The local API currently allows `http://localhost:5173`.
+Restart the Vite dev server after changing `.env.local`. Production builds must receive the appropriate value at build time. Because `VITE_*` values are included in browser assets, do not put secrets in them. The API currently allows browser requests from any origin; restrict this policy to known frontend origins before adding authentication or handling private data.
 
 ## API
 

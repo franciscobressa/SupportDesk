@@ -2,7 +2,7 @@
 
 A customer support dashboard for managing tickets, built with ASP.NET Core Web API and Vue 3.
 
-Live Demo: [https://support-desk-frontend-rouge.vercel.app/]((https://support-desk-frontend-rouge.vercel.app/)
+Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-desk-frontend-rouge.vercel.app/)
 ## Features
 
 - Browse, search, filter, and sort support tickets.

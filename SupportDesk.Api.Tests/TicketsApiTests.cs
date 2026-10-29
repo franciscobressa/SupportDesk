@@ -9,6 +9,15 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
 {
     private readonly HttpClient _client = factory.CreateClient();
 
+    [Fact]
+    public async Task GetTicketsAsync_ReturnsTwentyFiveDemoTicketsOnStartup()
+    {
+        var tickets = await _client.GetFromJsonAsync<JsonElement>("/api/tickets");
+
+        Assert.Equal(JsonValueKind.Array, tickets.ValueKind);
+        Assert.Equal(25, tickets.GetArrayLength());
+    }
+
     [Theory]
     [InlineData("/api/tickets?status=Unknown")]
     [InlineData("/api/tickets?sortBy=unknown")]

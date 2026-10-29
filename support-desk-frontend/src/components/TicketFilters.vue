@@ -48,7 +48,7 @@ function toggleSortDirection(): void {
         <circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.8" />
         <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
       </svg>
-      <input v-model="search" class="form-input pl-10" placeholder="Search tickets..." />
+      <input v-model="search" class="form-input form-input-search" placeholder="Search tickets..." />
     </label>
 
     <label>

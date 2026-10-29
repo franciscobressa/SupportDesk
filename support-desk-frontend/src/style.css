@@ -59,6 +59,10 @@ button:disabled {
     box-shadow 150ms ease;
 }
 
+.form-input-search {
+  padding-left: 2.5rem;
+}
+
 .form-input::placeholder {
   color: #94a3b8;
 }

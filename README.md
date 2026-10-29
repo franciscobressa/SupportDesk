@@ -2,6 +2,7 @@
 
 A customer support dashboard for managing tickets, built with ASP.NET Core Web API and Vue 3.
 
+Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-desk-frontend-rouge.vercel.app/)
 ## Features
 
 - Browse, search, filter, and sort support tickets.
@@ -17,8 +18,6 @@ A customer support dashboard for managing tickets, built with ASP.NET Core Web A
 - Persistence: SQLite with EF Core; migrations are applied at startup and demo data is added until the database contains at least 25 tickets.
 - Backend layers: controllers, application services, and a domain-specific `ITicketRepository` backed by EF Core.
 - Frontend boundaries: views coordinate route-level state and workflows; `AppShell` owns shared navigation, while focused components render filters, ticket rows, forms, comments, status history, and dialogs. Pinia owns shared ticket state and the API module owns HTTP communication.
-
-See [`ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) for the reasoning behind the frontend and backend design, trade-offs, and potential evolution paths.
 
 ### Design decisions and trade-offs
 
@@ -54,44 +53,6 @@ npm run dev
 Vite serves the frontend at `http://localhost:5173` and proxies `/api` requests to `http://localhost:5131`.
 
 The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`, relative to the API project regardless of the shell's working directory. Startup applies EF Core migrations and fills the database with demo tickets until it contains 25 tickets. Existing tickets are kept; a local database that already contains more than 25 tickets is unchanged.
-
-### Deploy the API to Vercel
-
-The API can run on Vercel's beta Container Runtime using Docker. Create a separate Vercel project for this repository and set its **Root Directory** to `support-desk-backend`; Vercel detects the `Dockerfile` there, so a `vercel.json` build configuration is not required for this standalone API.
-
-Set these project environment variables in Vercel:
-
-```text
-PORT=8080
-```
-
-Set `VITE_API_BASE_URL` in the frontend project's build environment to `https://<your-api-domain>/api`. CORS currently allows requests from any origin for this public take-home demo, so no CORS environment variable is needed. Do not use this policy for a production API that has authentication or private data.
-
-**Demo limitation:** this deployment intentionally keeps SQLite to avoid changing the approved take-home database design. Vercel container filesystems are not persistent, and scaled instances do not share their local SQLite files. Ticket changes may disappear after an instance is replaced and different instances may show different seeded data. Do not use this deployment for durable or real customer data; use managed PostgreSQL before production.
-
-### Deploy the frontend to Vercel
-
-Create a separate Vercel project with **Root Directory** set to `support-desk-frontend`, and set `VITE_API_BASE_URL` to the deployed API URL ending in `/api`. The frontend's `vercel.json` rewrites page requests to `index.html`, so Vue Router routes such as `/tickets/{id}` also work when opened directly or refreshed.
-
-Build and run the container locally from the backend directory:
-
-```powershell
-cd support-desk-backend
-docker build -t supportdesk-api .
-docker run --rm -e PORT=8080 -p 8080:8080 supportdesk-api
-```
-
-The Vercel Container Runtime is currently in beta and has platform limits, including a 4.5 MB request/response body limit. These deployment instructions prepare the project but do not indicate that it has been deployed.
-
-### Configure the API URL
-
-The frontend reads `VITE_API_BASE_URL` when Vite starts or builds the app. By default, it uses `/api` and the local Vite proxy. To point the browser directly at another API, copy `.env.example` to `.env.local` inside `support-desk-frontend` and set the API base URL, including the `/api` path:
-
-```env
-VITE_API_BASE_URL=https://api.example.com/api
-```
-
-Restart the Vite dev server after changing `.env.local`. Production builds must receive the appropriate value at build time. Because `VITE_*` values are included in browser assets, do not put secrets in them. The API currently allows browser requests from any origin; restrict this policy to known frontend origins before adding authentication or handling private data.
 
 ## API
 

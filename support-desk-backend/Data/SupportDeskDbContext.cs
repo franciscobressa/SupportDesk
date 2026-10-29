@@ -23,7 +23,6 @@ public sealed class SupportDeskDbContext(DbContextOptions<SupportDeskDbContext> 
             entity.Property(ticket => ticket.CustomerName).HasMaxLength(120);
             entity.Property(ticket => ticket.CustomerEmail).HasMaxLength(254);
             entity.HasIndex(ticket => ticket.CreatedAt);
-            entity.HasData(DemoTicketSeed.Tickets);
             entity.HasMany(ticket => ticket.Comments)
                 .WithOne(comment => comment.Ticket)
                 .HasForeignKey(comment => comment.TicketId)
@@ -39,7 +38,6 @@ public sealed class SupportDeskDbContext(DbContextOptions<SupportDeskDbContext> 
             entity.HasKey(comment => comment.Id);
             entity.Property(comment => comment.Text).HasMaxLength(2000).IsRequired();
             entity.Property(comment => comment.Author).HasMaxLength(120).IsRequired();
-            entity.HasData(DemoTicketSeed.Comments);
         });
 
         modelBuilder.Entity<TicketStatusChange>(entity =>
@@ -48,7 +46,6 @@ public sealed class SupportDeskDbContext(DbContextOptions<SupportDeskDbContext> 
             entity.Property(change => change.PreviousStatus).HasConversion<string>().HasMaxLength(32);
             entity.Property(change => change.NewStatus).HasConversion<string>().HasMaxLength(32);
             entity.Property(change => change.Author).HasMaxLength(120).IsRequired();
-            entity.HasData(DemoTicketSeed.StatusChanges);
         });
     }
 }

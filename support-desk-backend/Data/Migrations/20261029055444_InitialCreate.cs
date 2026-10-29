@@ -15,15 +15,15 @@ namespace SupportDesk.Api.Data.Migrations
                 name: "Tickets",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                    Description = table.Column<string>(type: "character varying(5000)", maxLength: 5000, nullable: false),
-                    Status = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Priority = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    CustomerName = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    CustomerEmail = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 5000, nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
+                    Priority = table.Column<string>(type: "TEXT", maxLength: 16, nullable: false),
+                    CustomerName = table.Column<string>(type: "TEXT", maxLength: 120, nullable: true),
+                    CustomerEmail = table.Column<string>(type: "TEXT", maxLength: 254, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -34,11 +34,11 @@ namespace SupportDesk.Api.Data.Migrations
                 name: "TicketComments",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Text = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    Author = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TicketId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Text = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    Author = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -55,12 +55,12 @@ namespace SupportDesk.Api.Data.Migrations
                 name: "TicketStatusChanges",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
-                    PreviousStatus = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    NewStatus = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    Author = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TicketId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    PreviousStatus = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
+                    NewStatus = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
+                    Author = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

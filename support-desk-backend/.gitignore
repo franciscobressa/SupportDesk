@@ -3,4 +3,3 @@ obj/
 *.db
 *.db-shm
 *.db-wal
-.env

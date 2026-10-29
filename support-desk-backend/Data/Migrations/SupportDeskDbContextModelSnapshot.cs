@@ -3,7 +3,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SupportDesk.Api.Data;
 
 #nullable disable
@@ -16,545 +15,116 @@ namespace SupportDesk.Api.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.14")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
             modelBuilder.Entity("SupportDesk.Api.Domain.Ticket", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("CustomerEmail")
                         .HasMaxLength(254)
-                        .HasColumnType("character varying(254)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("CustomerName")
                         .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(5000)
-                        .HasColumnType("character varying(5000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
 
                     b.ToTable("Tickets");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 29, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "alex.rivera@example.com",
-                            CustomerName = "Alex Rivera",
-                            Description = "The billing page shows the invoice, but the download button returns an error.",
-                            Priority = "High",
-                            Status = "Open",
-                            Title = "Cannot download monthly invoice",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 29, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "jamie.patel@example.com",
-                            CustomerName = "Jamie Patel",
-                            Description = "Please transfer the account owner role to the new operations manager.",
-                            Priority = "Medium",
-                            Status = "InProgress",
-                            Title = "Change account owner",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "morgan.blake@example.com",
-                            CustomerName = "Morgan Blake",
-                            Description = "The customer is prompted to sign in again every time the app is reopened.",
-                            Priority = "High",
-                            Status = "Open",
-                            Title = "Mobile app keeps logging out",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000004"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 27, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "sam.carter@example.com",
-                            CustomerName = "Sam Carter",
-                            Description = "Two identical charges appear for the same subscription renewal.",
-                            Priority = "High",
-                            Status = "Open",
-                            Title = "Duplicate charge on latest payment",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 27, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000005"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 27, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "riley.foster@example.com",
-                            CustomerName = "Riley Foster",
-                            Description = "The company address was updated in settings but the old address remains on invoices.",
-                            Priority = "Low",
-                            Status = "InProgress",
-                            Title = "Update company address",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 27, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000006"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "taylor.kim@example.com",
-                            CustomerName = "Taylor Kim",
-                            Description = "Inviting a new teammate fails with an unexpected error message.",
-                            Priority = "Medium",
-                            Status = "Open",
-                            Title = "Unable to invite a teammate",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000007"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "casey.nguyen@example.com",
-                            CustomerName = "Casey Nguyen",
-                            Description = "The CSV export contains fewer records than the report displayed in the dashboard.",
-                            Priority = "High",
-                            Status = "InProgress",
-                            Title = "Export report has missing rows",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000008"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 25, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "jordan.ellis@example.com",
-                            CustomerName = "Jordan Ellis",
-                            Description = "Daily activity notifications are arriving several hours after the events.",
-                            Priority = "Low",
-                            Status = "Open",
-                            Title = "Notification emails arrive late",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 25, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000009"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 25, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "avery.brooks@example.com",
-                            CustomerName = "Avery Brooks",
-                            Description = "The customer replaced their phone and needs help restoring access to the account.",
-                            Priority = "High",
-                            Status = "Open",
-                            Title = "Reset two-factor authentication",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 25, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000010"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 24, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "drew.parker@example.com",
-                            CustomerName = "Drew Parker",
-                            Description = "Searching by a known ticket title only returns recently created tickets.",
-                            Priority = "Medium",
-                            Status = "InProgress",
-                            Title = "Search does not find older tickets",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 24, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000011"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 24, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "quinn.murphy@example.com",
-                            CustomerName = "Quinn Murphy",
-                            Description = "The account still shows the previous plan after the downgrade was confirmed.",
-                            Priority = "Medium",
-                            Status = "Open",
-                            Title = "Subscription downgrade not applied",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 24, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000012"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 23, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "skyler.james@example.com",
-                            CustomerName = "Skyler James",
-                            Description = "The usage chart has no data for the current month despite recent activity.",
-                            Priority = "Medium",
-                            Status = "Resolved",
-                            Title = "Dashboard chart is blank",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 23, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000013"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 23, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "reese.morgan@example.com",
-                            CustomerName = "Reese Morgan",
-                            Description = "Activity timestamps appear three hours ahead of the account timezone.",
-                            Priority = "Low",
-                            Status = "Open",
-                            Title = "Incorrect timezone in activity log",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 23, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000014"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "robin.hayes@example.com",
-                            CustomerName = "Robin Hayes",
-                            Description = "A valid replacement card is rejected when saved to the billing profile.",
-                            Priority = "High",
-                            Status = "InProgress",
-                            Title = "Payment method update rejected",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000015"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "cameron.wells@example.com",
-                            CustomerName = "Cameron Wells",
-                            Description = "The archive action is disabled for a project that has no active tasks.",
-                            Priority = "Low",
-                            Status = "Open",
-                            Title = "Cannot archive completed project",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 22, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000016"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 21, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "finley.scott@example.com",
-                            CustomerName = "Finley Scott",
-                            Description = "The invitation link expired before the teammate had a chance to accept it.",
-                            Priority = "Medium",
-                            Status = "Resolved",
-                            Title = "Invite link expired too soon",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 21, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000017"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 21, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "emerson.cole@example.com",
-                            CustomerName = "Emerson Cole",
-                            Description = "Changing the display name appears successful but reverts after refreshing the page.",
-                            Priority = "Medium",
-                            Status = "Open",
-                            Title = "Profile changes are not saved",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 21, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000018"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 20, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "harper.diaz@example.com",
-                            CustomerName = "Harper Diaz",
-                            Description = "The integration receives repeated webhook events after returning a successful response.",
-                            Priority = "High",
-                            Status = "InProgress",
-                            Title = "Webhook delivery retries unexpectedly",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 20, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000019"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 20, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "logan.price@example.com",
-                            CustomerName = "Logan Price",
-                            Description = "Please provide downloadable receipts for the previous three billing periods.",
-                            Priority = "Low",
-                            Status = "Open",
-                            Title = "Need a copy of last quarter receipts",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 20, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000020"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 19, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "peyton.reed@example.com",
-                            CustomerName = "Peyton Reed",
-                            Description = "Removing a former employee from the workspace returns a permission error.",
-                            Priority = "Medium",
-                            Status = "Open",
-                            Title = "Cannot remove former teammate",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 19, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000021"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 18, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "dakota.lane@example.com",
-                            CustomerName = "Dakota Lane",
-                            Description = "Selected date and status filters are cleared whenever the report page reloads.",
-                            Priority = "Low",
-                            Status = "Resolved",
-                            Title = "Report filters reset after refresh",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 18, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000022"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 17, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "shiloh.grant@example.com",
-                            CustomerName = "Shiloh Grant",
-                            Description = "The administrator needs instructions for rotating an API key without downtime.",
-                            Priority = "Low",
-                            Status = "Closed",
-                            Title = "API key rotation guidance",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 17, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000023"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 16, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "frankie.bell@example.com",
-                            CustomerName = "Frankie Bell",
-                            Description = "PDF attachments show a blank preview although the file can be downloaded.",
-                            Priority = "Medium",
-                            Status = "Open",
-                            Title = "Attachment preview does not load",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 16, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000024"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 15, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "kendall.ross@example.com",
-                            CustomerName = "Kendall Ross",
-                            Description = "The workspace reached its monthly usage limit earlier than expected.",
-                            Priority = "High",
-                            Status = "InProgress",
-                            Title = "Usage limit reached unexpectedly",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 15, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        },
-                        new
-                        {
-                            Id = new Guid("10000000-0000-0000-0000-000000000025"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 14, 13, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerEmail = "sage.turner@example.com",
-                            CustomerName = "Sage Turner",
-                            Description = "The account owner requested account closure and confirmation of the data retention policy.",
-                            Priority = "Medium",
-                            Status = "Closed",
-                            Title = "Close account and confirm data removal",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 14, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
-                        });
                 });
 
             modelBuilder.Entity("SupportDesk.Api.Domain.TicketComment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("TicketId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TicketId");
 
                     b.ToTable("TicketComments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000001"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 29, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "We are reviewing the invoice download issue and will follow up shortly.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000001")
-                        },
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000002"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "We have started the account ownership transfer review.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000002")
-                        },
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000003"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "We are comparing the exported rows with the report results.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000007")
-                        },
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000004"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 23, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "The chart data has been refreshed and should now be visible.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000012")
-                        },
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000005"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 21, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "A new invitation link has been sent to the customer.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000006"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 17, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "We shared the key rotation steps with the account administrator.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000022")
-                        },
-                        new
-                        {
-                            Id = new Guid("20000000-0000-0000-0000-000000000007"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 14, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Text = "We confirmed the account closure request and shared the data policy.",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000025")
-                        });
                 });
 
             modelBuilder.Entity("SupportDesk.Api.Domain.TicketStatusChange", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("NewStatus")
                         .IsRequired()
                         .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PreviousStatus")
                         .IsRequired()
                         .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("TicketId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TicketId");
 
                     b.ToTable("TicketStatusChanges");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000001"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "InProgress",
-                            PreviousStatus = "Open",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000002")
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000002"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 27, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "InProgress",
-                            PreviousStatus = "Open",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000005")
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000003"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "InProgress",
-                            PreviousStatus = "Open",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000007")
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000004"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 23, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "Resolved",
-                            PreviousStatus = "InProgress",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000012")
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000005"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 21, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "Resolved",
-                            PreviousStatus = "InProgress",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000016")
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000006"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 17, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "Closed",
-                            PreviousStatus = "Resolved",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000022")
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000007"),
-                            Author = "Support Manager (mock)",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 10, 14, 15, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            NewStatus = "Closed",
-                            PreviousStatus = "Resolved",
-                            TicketId = new Guid("10000000-0000-0000-0000-000000000025")
-                        });
                 });
 
             modelBuilder.Entity("SupportDesk.Api.Domain.TicketComment", b =>

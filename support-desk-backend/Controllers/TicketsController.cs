@@ -70,7 +70,8 @@ public sealed class TicketsController(TicketService ticketService) : ControllerB
             parameters.Page,
             parameters.PageSize,
             result.TotalCount,
-            totalPages));
+            totalPages,
+            result.Summary));
     }
 
     [HttpGet("{id:guid}")]

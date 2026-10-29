@@ -7,7 +7,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
 {
     private const string MockAuthor = "Support Manager (mock)";
 
-    public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetTicketsAsync(
+    public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetTicketsAsync(
         TicketListQuery query,
         CancellationToken cancellationToken)
     {

@@ -20,6 +20,11 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
         Assert.Equal(10, result.GetProperty("pageSize").GetInt32());
         Assert.Equal(25, result.GetProperty("totalCount").GetInt32());
         Assert.Equal(3, result.GetProperty("totalPages").GetInt32());
+        var summary = result.GetProperty("summary");
+        Assert.Equal(9, summary.GetProperty("open").GetInt32());
+        Assert.Equal(7, summary.GetProperty("inProgress").GetInt32());
+        Assert.Equal(5, summary.GetProperty("resolved").GetInt32());
+        Assert.Equal(10, summary.GetProperty("highPriority").GetInt32());
     }
 
     [Fact]
@@ -52,6 +57,7 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
         Assert.Single(items.EnumerateArray());
         Assert.Equal(1, result.GetProperty("totalCount").GetInt32());
         Assert.Equal("Unable to reset account password", items[0].GetProperty("title").GetString());
+        Assert.Equal(9, result.GetProperty("summary").GetProperty("open").GetInt32());
     }
 
     [Fact]

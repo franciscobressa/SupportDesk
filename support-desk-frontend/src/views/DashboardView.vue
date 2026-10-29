@@ -8,7 +8,12 @@ import TicketFilters from '../components/TicketFilters.vue'
 import TicketForm from '../components/TicketForm.vue'
 import TicketTable from '../components/TicketTable.vue'
 import { useTicketsStore } from '../stores/tickets'
-import type { Ticket, TicketListFilters, TicketWriteRequest } from '../types/tickets'
+import type {
+  Ticket,
+  TicketListFilters,
+  TicketStatus,
+  TicketWriteRequest,
+} from '../types/tickets'
 
 const router = useRouter()
 const ticketsStore = useTicketsStore()
@@ -80,6 +85,16 @@ function updateFilters(nextFilters: TicketListFilters): void {
 
 function changePage(page: number): void {
   filters.page = page
+}
+
+function toggleStatusCard(status: TicketStatus): void {
+  filters.status = filters.status === status ? '' : status
+  filters.page = 1
+}
+
+function toggleHighPriorityCard(): void {
+  filters.priority = filters.priority === 'High' ? '' : 'High'
+  filters.page = 1
 }
 
 async function createTicket(ticket: TicketWriteRequest): Promise<void> {
@@ -159,7 +174,54 @@ onBeforeUnmount(() => {
         </button>
       </section>
 
-      <section class="mt-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/30">
+      <section class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Ticket queue summary">
+        <button
+          type="button"
+          class="rounded-2xl border p-4 text-left shadow-sm transition hover:border-indigo-200 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-5"
+          :class="filters.status === 'Open' ? 'border-indigo-300 bg-indigo-50/70 ring-1 ring-indigo-200' : 'border-slate-200/80 bg-white'"
+          :aria-pressed="filters.status === 'Open'"
+          @click="toggleStatusCard('Open')"
+        >
+          <span class="text-sm font-medium text-slate-500">Open</span>
+          <span class="mt-2 block text-2xl font-bold tracking-tight text-slate-900">{{ ticketsStore.summary.open }}</span>
+          <span class="mt-1 block text-xs text-slate-400">View open tickets</span>
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl border p-4 text-left shadow-sm transition hover:border-indigo-200 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-5"
+          :class="filters.status === 'InProgress' ? 'border-indigo-300 bg-indigo-50/70 ring-1 ring-indigo-200' : 'border-slate-200/80 bg-white'"
+          :aria-pressed="filters.status === 'InProgress'"
+          @click="toggleStatusCard('InProgress')"
+        >
+          <span class="text-sm font-medium text-slate-500">In progress</span>
+          <span class="mt-2 block text-2xl font-bold tracking-tight text-slate-900">{{ ticketsStore.summary.inProgress }}</span>
+          <span class="mt-1 block text-xs text-slate-400">View active work</span>
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl border p-4 text-left shadow-sm transition hover:border-indigo-200 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-5"
+          :class="filters.status === 'Resolved' ? 'border-indigo-300 bg-indigo-50/70 ring-1 ring-indigo-200' : 'border-slate-200/80 bg-white'"
+          :aria-pressed="filters.status === 'Resolved'"
+          @click="toggleStatusCard('Resolved')"
+        >
+          <span class="text-sm font-medium text-slate-500">Resolved</span>
+          <span class="mt-2 block text-2xl font-bold tracking-tight text-slate-900">{{ ticketsStore.summary.resolved }}</span>
+          <span class="mt-1 block text-xs text-slate-400">View resolved tickets</span>
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl border p-4 text-left shadow-sm transition hover:border-amber-200 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:p-5"
+          :class="filters.priority === 'High' ? 'border-amber-300 bg-amber-50/70 ring-1 ring-amber-200' : 'border-slate-200/80 bg-white'"
+          :aria-pressed="filters.priority === 'High'"
+          @click="toggleHighPriorityCard"
+        >
+          <span class="text-sm font-medium text-slate-500">High priority</span>
+          <span class="mt-2 block text-2xl font-bold tracking-tight text-slate-900">{{ ticketsStore.summary.highPriority }}</span>
+          <span class="mt-1 block text-xs text-slate-400">View urgent tickets</span>
+        </button>
+      </section>
+
+      <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/30">
         <div class="flex flex-col gap-4 border-b border-slate-100 p-5 sm:p-6">
           <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>

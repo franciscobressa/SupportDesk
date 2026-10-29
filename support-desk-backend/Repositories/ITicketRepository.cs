@@ -4,7 +4,7 @@ namespace SupportDesk.Api.Repositories;
 
 public interface ITicketRepository
 {
-    Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetPageAsync(
+    Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetPageAsync(
         TicketListQuery query,
         CancellationToken cancellationToken);
 

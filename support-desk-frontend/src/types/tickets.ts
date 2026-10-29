@@ -25,6 +25,14 @@ export interface TicketPageMetadata {
 
 export interface TicketListResponse extends TicketPageMetadata {
   items: Ticket[]
+  summary: TicketSummary
+}
+
+export interface TicketSummary {
+  open: number
+  inProgress: number
+  resolved: number
+  highPriority: number
 }
 
 export interface Ticket {

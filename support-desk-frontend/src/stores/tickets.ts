@@ -4,6 +4,7 @@ import type {
   TicketDetails,
   TicketListFilters,
   TicketPageMetadata,
+  TicketSummary,
   TicketWriteRequest,
 } from '../types/tickets'
 import {
@@ -24,6 +25,12 @@ export const useTicketsStore = defineStore('tickets', {
       totalCount: 0,
       totalPages: 0,
     } as TicketPageMetadata,
+    summary: {
+      open: 0,
+      inProgress: 0,
+      resolved: 0,
+      highPriority: 0,
+    } as TicketSummary,
     selectedTicket: null as TicketDetails | null,
     listLoading: false,
     detailLoading: false,
@@ -52,6 +59,7 @@ export const useTicketsStore = defineStore('tickets', {
             totalCount: result.totalCount,
             totalPages: result.totalPages,
           }
+          this.summary = result.summary
         }
       } catch (error: unknown) {
         if (requestId === this.listRequestId) {

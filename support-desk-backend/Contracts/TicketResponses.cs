@@ -18,7 +18,8 @@ public sealed record TicketListResponse(
     int Page,
     int PageSize,
     int TotalCount,
-    int TotalPages);
+    int TotalPages,
+    TicketSummary Summary);
 
 public sealed record TicketCommentResponse(
     Guid Id,

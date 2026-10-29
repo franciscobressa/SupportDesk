@@ -6,10 +6,20 @@ namespace SupportDesk.Api.Repositories;
 
 public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITicketRepository
 {
-    public async Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetPageAsync(
+    public async Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetPageAsync(
         TicketListQuery query,
         CancellationToken cancellationToken)
     {
+        var summary = await dbContext.Tickets
+            .GroupBy(_ => 1)
+            .Select(tickets => new TicketSummary(
+                tickets.Count(ticket => ticket.Status == TicketStatus.Open),
+                tickets.Count(ticket => ticket.Status == TicketStatus.InProgress),
+                tickets.Count(ticket => ticket.Status == TicketStatus.Resolved),
+                tickets.Count(ticket => ticket.Priority == TicketPriority.High)))
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? new TicketSummary(0, 0, 0, 0);
+
         IQueryable<Ticket> tickets = dbContext.Tickets.AsNoTracking();
 
         if (query.Status is not null)
@@ -43,7 +53,7 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
                 .Take(query.PageSize)
                 .ToListAsync(cancellationToken);
 
-        return (pageTickets, totalCount);
+        return (pageTickets, totalCount, summary);
     }
 
     public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)

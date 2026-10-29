@@ -17,3 +17,9 @@ public sealed record TicketListQuery(
     bool SortDescending,
     int Page = 1,
     int PageSize = 10);
+
+public sealed record TicketSummary(
+    int Open,
+    int InProgress,
+    int Resolved,
+    int HighPriority);

@@ -221,12 +221,17 @@ public sealed class TicketServiceTests
 
         public TicketListQuery? LastListQuery { get; private set; }
 
-        public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetPageAsync(
+        public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetPageAsync(
             TicketListQuery query,
             CancellationToken cancellationToken)
         {
             LastListQuery = query;
-            return Task.FromResult(((IReadOnlyList<Ticket>)Tickets, Tickets.Count));
+            var summary = new TicketSummary(
+                Tickets.Count(ticket => ticket.Status == TicketStatus.Open),
+                Tickets.Count(ticket => ticket.Status == TicketStatus.InProgress),
+                Tickets.Count(ticket => ticket.Status == TicketStatus.Resolved),
+                Tickets.Count(ticket => ticket.Priority == TicketPriority.High));
+            return Task.FromResult(((IReadOnlyList<Ticket>)Tickets, Tickets.Count, summary));
         }
 
         public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)

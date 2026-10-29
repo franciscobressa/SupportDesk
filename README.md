@@ -34,6 +34,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 ## Extras beyond the brief
 
 - Server-side pagination returns only the requested page while preserving filtered result counts; this avoids transferring the full ticket list as it grows.
+- Dashboard summary cards show global ticket counts by status and high priority, and act as quick filters for queue triage.
 - Status-change history makes ticket progress auditable in the detail view without mixing status events with customer comments.
 - The public demo is deployed as separate frontend and API projects, with direct Vue Router links supported by the frontend deployment rewrite.
 
@@ -75,7 +76,7 @@ The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`
 
 ## API
 
-- `GET /api/tickets`: filter by `status`, `priority`, and `search`; sort by `createdAt`, `priority`, or `status` using `sortDirection=asc|desc`; paginate with `page` (default `1`) and `pageSize` (default `10`, maximum `50`). The response contains `items`, `page`, `pageSize`, `totalCount`, and `totalPages`.
+- `GET /api/tickets`: filter by `status`, `priority`, and `search`; sort by `createdAt`, `priority`, or `status` using `sortDirection=asc|desc`; paginate with `page` (default `1`) and `pageSize` (default `10`, maximum `50`). The response contains `items`, `page`, `pageSize`, `totalCount`, `totalPages`, and global `summary` counts by status and high priority.
 - `GET /api/tickets/{id}`: ticket details, comments, and status history.
 - `POST /api/tickets`: create a ticket.
 - `PUT /api/tickets/{id}`: update a ticket; status changes are recorded in its history.

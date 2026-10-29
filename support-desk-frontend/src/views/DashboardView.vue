@@ -18,6 +18,8 @@ const filters = reactive<TicketListFilters>({
   priority: '',
   sortBy: 'createdAt',
   sortDirection: 'desc',
+  page: 1,
+  pageSize: 10,
 })
 const isCreateOpen = ref(false)
 const ticketToDelete = ref<Ticket | null>(null)
@@ -32,6 +34,14 @@ let filterTimer: number | undefined
 let greetingTimer: number | undefined
 
 const tickets = computed<Ticket[]>(() => ticketsStore.tickets)
+const pagination = computed(() => ticketsStore.pagination)
+const currentPage = computed(() => filters.page ?? 1)
+const firstTicketNumber = computed(() =>
+  pagination.value.totalCount === 0 ? 0 : (pagination.value.page - 1) * pagination.value.pageSize + 1,
+)
+const lastTicketNumber = computed(() =>
+  Math.min(pagination.value.page * pagination.value.pageSize, pagination.value.totalCount),
+)
 const hasActiveFilters = computed(() => Boolean(filters.search || filters.status || filters.priority))
 const sortLabel = computed(() => filters.sortBy === 'createdAt' ? 'created date' : filters.sortBy)
 
@@ -50,11 +60,26 @@ function clearFilters(): void {
     priority: '',
     sortBy: 'createdAt',
     sortDirection: 'desc',
+    page: 1,
+    pageSize: 10,
   })
 }
 
 function updateFilters(nextFilters: TicketListFilters): void {
-  Object.assign(filters, nextFilters)
+  const criteriaChanged = nextFilters.search !== filters.search
+    || nextFilters.status !== filters.status
+    || nextFilters.priority !== filters.priority
+    || nextFilters.sortBy !== filters.sortBy
+    || nextFilters.sortDirection !== filters.sortDirection
+
+  Object.assign(filters, nextFilters, {
+    page: criteriaChanged ? 1 : nextFilters.page ?? filters.page,
+    pageSize: 10,
+  })
+}
+
+function changePage(page: number): void {
+  filters.page = page
 }
 
 async function createTicket(ticket: TicketWriteRequest): Promise<void> {
@@ -78,6 +103,12 @@ async function deleteTicket(): Promise<void> {
   try {
     await ticketsStore.removeTicket(ticketToDelete.value.id)
     ticketToDelete.value = null
+    const lastPage = Math.max(1, pagination.value.totalPages)
+    if (currentPage.value > lastPage) {
+      filters.page = lastPage
+    } else {
+      await fetchTickets()
+    }
   } catch (error: unknown) {
     actionError.value = getErrorMessage(error)
   }
@@ -132,7 +163,7 @@ onBeforeUnmount(() => {
         <div class="flex flex-col gap-4 border-b border-slate-100 p-5 sm:p-6">
           <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
-              <h2 class="text-lg font-bold text-slate-900">All tickets <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{{ tickets.length }}</span></h2>
+              <h2 class="text-lg font-bold text-slate-900">All tickets <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{{ pagination.totalCount }}</span></h2>
               <p class="mt-1 text-sm text-slate-500">Manage and keep track of your customer requests.</p>
             </div>
             <button type="button" class="button-secondary self-start sm:self-auto" :disabled="ticketsStore.listLoading" @click="fetchTickets">
@@ -175,9 +206,36 @@ onBeforeUnmount(() => {
 
         <TicketTable v-else-if="tickets.length" :tickets="tickets" @delete="ticketToDelete = $event; actionError = ''" />
 
-        <div v-if="tickets.length" class="flex flex-col justify-between gap-2 border-t border-slate-100 px-5 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:px-6">
-          <p>Showing <span class="font-semibold text-slate-700">{{ tickets.length }}</span> tickets</p>
-          <p>Sorted by <span class="font-semibold text-slate-700">{{ sortLabel }}</span>, {{ filters.sortDirection === 'desc' ? 'descending' : 'ascending' }}</p>
+        <div v-if="pagination.totalCount" class="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 text-xs text-slate-500 sm:px-6">
+          <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <p>
+              Showing <span class="font-semibold text-slate-700">{{ firstTicketNumber }}–{{ lastTicketNumber }}</span>
+              of <span class="font-semibold text-slate-700">{{ pagination.totalCount }}</span> tickets
+            </p>
+            <p>Sorted by <span class="font-semibold text-slate-700">{{ sortLabel }}</span>, {{ filters.sortDirection === 'desc' ? 'descending' : 'ascending' }}</p>
+          </div>
+          <nav class="flex items-center justify-between gap-3" aria-label="Ticket pages">
+            <button
+              type="button"
+              class="button-secondary min-h-9 px-3 py-1.5"
+              :disabled="currentPage <= 1 || ticketsStore.listLoading"
+              @click="changePage(currentPage - 1)"
+            >
+              Previous
+            </button>
+            <p aria-live="polite">
+              Page <span class="font-semibold text-slate-700">{{ pagination.page }}</span>
+              of <span class="font-semibold text-slate-700">{{ pagination.totalPages }}</span>
+            </p>
+            <button
+              type="button"
+              class="button-secondary min-h-9 px-3 py-1.5"
+              :disabled="currentPage >= pagination.totalPages || ticketsStore.listLoading"
+              @click="changePage(currentPage + 1)"
+            >
+              Next
+            </button>
+          </nav>
         </div>
       </section>
 

@@ -12,6 +12,19 @@ export interface TicketListFilters {
   priority?: TicketPriority | ''
   sortBy?: TicketSortField
   sortDirection?: SortDirection
+  page?: number
+  pageSize?: number
+}
+
+export interface TicketPageMetadata {
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+}
+
+export interface TicketListResponse extends TicketPageMetadata {
+  items: Ticket[]
 }
 
 export interface Ticket {

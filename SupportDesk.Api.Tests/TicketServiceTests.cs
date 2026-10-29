@@ -10,113 +10,32 @@ public sealed class TicketServiceTests
         new(2026, 10, 29, 14, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task GetTicketsAsync_AppliesCombinedFiltersAndCaseInsensitiveSearch()
+    public async Task GetTicketsAsync_ForwardsQueryToRepository()
     {
-        var matchingTicket = CreateTicket(
-            id: "00000000-0000-0000-0000-000000000001",
-            title: "ALPHA password reset",
-            status: TicketStatus.Open,
-            priority: TicketPriority.High,
-            createdAt: FixedNow.AddDays(-1));
-        matchingTicket.CustomerEmail = "customer@example.com";
-
-        var repository = new FakeTicketRepository(
-            matchingTicket,
-            CreateTicket(
-                id: "00000000-0000-0000-0000-000000000002",
-                title: "Alpha billing issue",
-                status: TicketStatus.Open,
-                priority: TicketPriority.Low,
-                createdAt: FixedNow),
-            CreateTicket(
-                id: "00000000-0000-0000-0000-000000000003",
-                title: "Alpha another request",
-                status: TicketStatus.InProgress,
-                priority: TicketPriority.High,
-                createdAt: FixedNow));
+        var ticket = CreateTicket(
+            "00000000-0000-0000-0000-000000000001",
+            "Requested page",
+            TicketStatus.Open,
+            TicketPriority.High,
+            FixedNow);
+        var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
+        var query = new TicketListQuery(
+            TicketStatus.Open,
+            TicketPriority.High,
+            "password",
+            TicketSortField.CreatedAt,
+            SortDescending: true,
+            Page: 2,
+            PageSize: 10);
 
         var result = await service.GetTicketsAsync(
-            new TicketListQuery(
-                TicketStatus.Open,
-                TicketPriority.High,
-                "alpha",
-                TicketSortField.CreatedAt,
-                SortDescending: true),
+            query,
             CancellationToken.None);
 
-        Assert.Equal([matchingTicket], result);
-    }
-
-    [Theory]
-    [InlineData(TicketSortField.CreatedAt, false, "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000003")]
-    [InlineData(TicketSortField.CreatedAt, true, "00000000-0000-0000-0000-000000000003", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000001")]
-    [InlineData(TicketSortField.Priority, false, "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000003")]
-    [InlineData(TicketSortField.Priority, true, "00000000-0000-0000-0000-000000000003", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000001")]
-    [InlineData(TicketSortField.Status, false, "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000003")]
-    [InlineData(TicketSortField.Status, true, "00000000-0000-0000-0000-000000000003", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000001")]
-    public async Task GetTicketsAsync_SortsBySelectedFieldAndDirection(
-        TicketSortField sortBy,
-        bool descending,
-        string firstId,
-        string secondId,
-        string thirdId)
-    {
-        var oldest = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Ticket A",
-            TicketStatus.Open,
-            TicketPriority.Low,
-            FixedNow.AddDays(-3));
-        var middle = CreateTicket(
-            "00000000-0000-0000-0000-000000000002",
-            "Ticket B",
-            TicketStatus.InProgress,
-            TicketPriority.Medium,
-            FixedNow.AddDays(-2));
-        var newest = CreateTicket(
-            "00000000-0000-0000-0000-000000000003",
-            "Ticket C",
-            TicketStatus.Resolved,
-            TicketPriority.High,
-            FixedNow.AddDays(-1));
-        var service = CreateService(new FakeTicketRepository(oldest, middle, newest));
-
-        var result = await service.GetTicketsAsync(
-            new TicketListQuery(null, null, null, sortBy, descending),
-            CancellationToken.None);
-
-        Assert.Equal([firstId, secondId, thirdId], result.Select(ticket => ticket.Id.ToString()));
-    }
-
-    [Fact]
-    public async Task GetTicketsAsync_UsesStableTieBreakers()
-    {
-        var later = CreateTicket(
-            "00000000-0000-0000-0000-000000000002",
-            "Later",
-            TicketStatus.Open,
-            TicketPriority.High,
-            FixedNow);
-        var earlierId = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Earlier ID",
-            TicketStatus.Open,
-            TicketPriority.High,
-            FixedNow);
-        var older = CreateTicket(
-            "00000000-0000-0000-0000-000000000003",
-            "Older",
-            TicketStatus.Open,
-            TicketPriority.High,
-            FixedNow.AddDays(-1));
-        var service = CreateService(new FakeTicketRepository(later, older, earlierId));
-
-        var result = await service.GetTicketsAsync(
-            new TicketListQuery(null, null, null, TicketSortField.Priority, SortDescending: false),
-            CancellationToken.None);
-
-        Assert.Equal([earlierId.Id, later.Id, older.Id], result.Select(ticket => ticket.Id));
+        Assert.Equal(query, repository.LastListQuery);
+        Assert.Equal([ticket], result.Tickets);
+        Assert.Equal(1, result.TotalCount);
     }
 
     [Fact]
@@ -300,9 +219,14 @@ public sealed class TicketServiceTests
 
         public int UpdateCount { get; private set; }
 
-        public Task<IReadOnlyList<Ticket>> GetAllAsync(CancellationToken cancellationToken)
+        public TicketListQuery? LastListQuery { get; private set; }
+
+        public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetPageAsync(
+            TicketListQuery query,
+            CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<Ticket>>(Tickets);
+            LastListQuery = query;
+            return Task.FromResult(((IReadOnlyList<Ticket>)Tickets, Tickets.Count));
         }
 
         public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)

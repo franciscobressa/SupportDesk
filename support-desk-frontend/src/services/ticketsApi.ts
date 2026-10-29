@@ -1,9 +1,9 @@
 import type {
   CreateTicketRequest,
-  Ticket,
   TicketComment,
   TicketDetails,
   TicketListFilters,
+  TicketListResponse,
   UpdateTicketRequest,
 } from '../types/tickets'
 
@@ -49,7 +49,7 @@ async function requestJson<TResponse>(path: string, options: RequestInit = {}): 
   return response.json() as Promise<TResponse>
 }
 
-export function getTickets(filters: TicketListFilters = {}): Promise<Ticket[]> {
+export function getTickets(filters: TicketListFilters = {}): Promise<TicketListResponse> {
   const query = new URLSearchParams()
 
   for (const [key, value] of Object.entries(filters)) {
@@ -59,7 +59,7 @@ export function getTickets(filters: TicketListFilters = {}): Promise<Ticket[]> {
   }
 
   const queryString = query.toString()
-  return requestJson<Ticket[]>(`/tickets${queryString ? `?${queryString}` : ''}`)
+  return requestJson<TicketListResponse>(`/tickets${queryString ? `?${queryString}` : ''}`)
 }
 
 export function getTicket(id: string): Promise<TicketDetails> {

@@ -7,33 +7,11 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
 {
     private const string MockAuthor = "Support Manager (mock)";
 
-    public async Task<IReadOnlyList<Ticket>> GetTicketsAsync(
+    public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetTicketsAsync(
         TicketListQuery query,
         CancellationToken cancellationToken)
     {
-        IEnumerable<Ticket> tickets = await ticketRepository.GetAllAsync(cancellationToken);
-
-        if (query.Status is not null)
-        {
-            tickets = tickets.Where(ticket => ticket.Status == query.Status);
-        }
-
-        if (query.Priority is not null)
-        {
-            tickets = tickets.Where(ticket => ticket.Priority == query.Priority);
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-            tickets = tickets.Where(ticket =>
-                ticket.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || ticket.Description.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || (ticket.CustomerName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (ticket.CustomerEmail?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
-        }
-
-        return ApplyOrdering(tickets, query).ToList();
+        return ticketRepository.GetPageAsync(query, cancellationToken);
     }
 
     public Task<Ticket?> GetTicketAsync(Guid id, CancellationToken cancellationToken)
@@ -150,36 +128,6 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
 
         await ticketRepository.DeleteAsync(ticket, cancellationToken);
         return true;
-    }
-
-    private static IOrderedEnumerable<Ticket> ApplyOrdering(
-        IEnumerable<Ticket> tickets,
-        TicketListQuery query)
-    {
-        return query.SortBy switch
-        {
-            TicketSortField.CreatedAt when query.SortDescending =>
-                tickets.OrderByDescending(ticket => ticket.CreatedAt).ThenBy(ticket => ticket.Id),
-            TicketSortField.CreatedAt =>
-                tickets.OrderBy(ticket => ticket.CreatedAt).ThenBy(ticket => ticket.Id),
-            TicketSortField.Priority when query.SortDescending =>
-                tickets.OrderByDescending(ticket => ticket.Priority)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            TicketSortField.Priority =>
-                tickets.OrderBy(ticket => ticket.Priority)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            TicketSortField.Status when query.SortDescending =>
-                tickets.OrderByDescending(ticket => ticket.Status)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            TicketSortField.Status =>
-                tickets.OrderBy(ticket => ticket.Status)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            _ => throw new ArgumentOutOfRangeException(nameof(query.SortBy))
-        };
     }
 
     private static string? NormalizeOptional(string? value)

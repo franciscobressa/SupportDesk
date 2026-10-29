@@ -14,7 +14,7 @@ A customer support dashboard for managing tickets, built with ASP.NET Core Web A
 
 - ASP.NET Core Web API with C#.
 - Vue 3 and TypeScript SPA with Vue Router, Pinia, and Tailwind CSS.
-- Persistence: SQLite with EF Core; migrations are applied at startup and sample tickets are seeded into an empty database.
+- Persistence: SQLite with EF Core; migrations are applied at startup and demo data is added until the database contains at least 25 tickets.
 - Backend layers: controllers, application services, and a domain-specific `ITicketRepository` backed by EF Core.
 - Frontend boundaries: views coordinate route-level state and workflows; `AppShell` owns shared navigation, while focused components render filters, ticket rows, forms, comments, status history, and dialogs. Pinia owns shared ticket state and the API module owns HTTP communication.
 
@@ -53,7 +53,7 @@ npm run dev
 
 Vite serves the frontend at `http://localhost:5173` and proxies `/api` requests to `http://localhost:5131`.
 
-The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`, relative to the API project regardless of the shell's working directory. Startup applies EF Core migrations and inserts sample tickets only when the database has no tickets.
+The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`, relative to the API project regardless of the shell's working directory. Startup applies EF Core migrations and fills the database with demo tickets until it contains 25 tickets. Existing tickets are kept; a local database that already contains more than 25 tickets is unchanged.
 
 ### Deploy the API to Vercel
 

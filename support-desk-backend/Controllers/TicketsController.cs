@@ -10,12 +10,22 @@ namespace SupportDesk.Api.Controllers;
 public sealed class TicketsController(TicketService ticketService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<TicketListItemResponse>>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<TicketListItemResponse>>> GetAll(
+    [ProducesResponseType<TicketListResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<TicketListResponse>> GetAll(
         [FromQuery] TicketQueryParameters parameters,
         CancellationToken cancellationToken)
     {
         var errors = new Dictionary<string, string[]>();
+        if (parameters.Page < 1)
+        {
+            errors[nameof(parameters.Page)] = ["Page must be greater than or equal to 1."];
+        }
+
+        if (parameters.PageSize is < 1 or > 50)
+        {
+            errors[nameof(parameters.PageSize)] = ["PageSize must be between 1 and 50."];
+        }
+
         if (!TryParseOptionalEnum(parameters.Status, out TicketStatus? status))
         {
             errors[nameof(parameters.Status)] = ["Status must be Open, InProgress, Resolved, or Closed."];
@@ -38,19 +48,29 @@ public sealed class TicketsController(TicketService ticketService) : ControllerB
             priority,
             parameters.Search,
             sortBy,
-            sortDescending);
-        var tickets = await ticketService.GetTicketsAsync(query, cancellationToken);
+            sortDescending,
+            parameters.Page,
+            parameters.PageSize);
+        var result = await ticketService.GetTicketsAsync(query, cancellationToken);
+        var items = result.Tickets.Select(ticket => new TicketListItemResponse(
+                ticket.Id,
+                ticket.Title,
+                ticket.Description,
+                ticket.Status,
+                ticket.Priority,
+                ticket.CustomerName,
+                ticket.CustomerEmail,
+                ticket.CreatedAt,
+                ticket.UpdatedAt))
+            .ToArray();
+        var totalPages = (int)Math.Ceiling(result.TotalCount / (double)parameters.PageSize);
 
-        return Ok(tickets.Select(ticket => new TicketListItemResponse(
-            ticket.Id,
-            ticket.Title,
-            ticket.Description,
-            ticket.Status,
-            ticket.Priority,
-            ticket.CustomerName,
-            ticket.CustomerEmail,
-            ticket.CreatedAt,
-            ticket.UpdatedAt)).ToArray());
+        return Ok(new TicketListResponse(
+            items,
+            parameters.Page,
+            parameters.PageSize,
+            result.TotalCount,
+            totalPages));
     }
 
     [HttpGet("{id:guid}")]
@@ -209,6 +229,10 @@ public sealed class TicketsController(TicketService ticketService) : ControllerB
 
 public sealed class TicketQueryParameters
 {
+    public int Page { get; set; } = 1;
+
+    public int PageSize { get; set; } = 10;
+
     public string? Status { get; set; }
 
     public string? Priority { get; set; }

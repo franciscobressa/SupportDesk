@@ -6,11 +6,44 @@ namespace SupportDesk.Api.Repositories;
 
 public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITicketRepository
 {
-    public async Task<IReadOnlyList<Ticket>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<(IReadOnlyList<Ticket> Tickets, int TotalCount)> GetPageAsync(
+        TicketListQuery query,
+        CancellationToken cancellationToken)
     {
-        return await dbContext.Tickets
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
+        IQueryable<Ticket> tickets = dbContext.Tickets.AsNoTracking();
+
+        if (query.Status is not null)
+        {
+            tickets = tickets.Where(ticket => ticket.Status == query.Status);
+        }
+
+        if (query.Priority is not null)
+        {
+            tickets = tickets.Where(ticket => ticket.Priority == query.Priority);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = EscapeLikePattern(query.Search.Trim());
+            var pattern = $"%{search}%";
+            tickets = tickets.Where(ticket =>
+                EF.Functions.Like(ticket.Title, pattern, "\\")
+                || EF.Functions.Like(ticket.Description, pattern, "\\")
+                || (ticket.CustomerName != null && EF.Functions.Like(ticket.CustomerName, pattern, "\\"))
+                || (ticket.CustomerEmail != null && EF.Functions.Like(ticket.CustomerEmail, pattern, "\\")));
+        }
+
+        var totalCount = await tickets.CountAsync(cancellationToken);
+        var orderedTickets = ApplyOrdering(tickets, query);
+        var offset = (long)(query.Page - 1) * query.PageSize;
+        var pageTickets = offset > int.MaxValue
+            ? []
+            : await orderedTickets
+                .Skip((int)offset)
+                .Take(query.PageSize)
+                .ToListAsync(cancellationToken);
+
+        return (pageTickets, totalCount);
     }
 
     public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -42,5 +75,57 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
     {
         dbContext.Tickets.Remove(ticket);
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static IOrderedQueryable<Ticket> ApplyOrdering(
+        IQueryable<Ticket> tickets,
+        TicketListQuery query)
+    {
+        return query.SortBy switch
+        {
+            TicketSortField.CreatedAt when query.SortDescending =>
+                tickets.OrderByDescending(ticket => ticket.CreatedAt.ToString()).ThenBy(ticket => ticket.Id),
+            TicketSortField.CreatedAt =>
+                tickets.OrderBy(ticket => ticket.CreatedAt.ToString()).ThenBy(ticket => ticket.Id),
+            TicketSortField.Priority when query.SortDescending =>
+                tickets.OrderByDescending(ticket =>
+                        ticket.Priority == TicketPriority.High ? 3
+                        : ticket.Priority == TicketPriority.Medium ? 2
+                        : 1)
+                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenBy(ticket => ticket.Id),
+            TicketSortField.Priority =>
+                tickets.OrderBy(ticket =>
+                        ticket.Priority == TicketPriority.High ? 3
+                        : ticket.Priority == TicketPriority.Medium ? 2
+                        : 1)
+                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenBy(ticket => ticket.Id),
+            TicketSortField.Status when query.SortDescending =>
+                tickets.OrderByDescending(ticket =>
+                        ticket.Status == TicketStatus.Closed ? 4
+                        : ticket.Status == TicketStatus.Resolved ? 3
+                        : ticket.Status == TicketStatus.InProgress ? 2
+                        : 1)
+                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenBy(ticket => ticket.Id),
+            TicketSortField.Status =>
+                tickets.OrderBy(ticket =>
+                        ticket.Status == TicketStatus.Closed ? 4
+                        : ticket.Status == TicketStatus.Resolved ? 3
+                        : ticket.Status == TicketStatus.InProgress ? 2
+                        : 1)
+                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenBy(ticket => ticket.Id),
+            _ => throw new ArgumentOutOfRangeException(nameof(query.SortBy))
+        };
+    }
+
+    private static string EscapeLikePattern(string value)
+    {
+        return value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal);
     }
 }

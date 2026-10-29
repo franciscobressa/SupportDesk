@@ -1,5 +1,11 @@
 import { defineStore } from 'pinia'
-import type { Ticket, TicketDetails, TicketListFilters, TicketWriteRequest } from '../types/tickets'
+import type {
+  Ticket,
+  TicketDetails,
+  TicketListFilters,
+  TicketPageMetadata,
+  TicketWriteRequest,
+} from '../types/tickets'
 import {
   createComment,
   createTicket,
@@ -12,6 +18,12 @@ import {
 export const useTicketsStore = defineStore('tickets', {
   state: () => ({
     tickets: [] as Ticket[],
+    pagination: {
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      totalPages: 0,
+    } as TicketPageMetadata,
     selectedTicket: null as TicketDetails | null,
     listLoading: false,
     detailLoading: false,
@@ -31,9 +43,15 @@ export const useTicketsStore = defineStore('tickets', {
       this.listError = ''
 
       try {
-        const tickets = await getTickets(filters)
+        const result = await getTickets(filters)
         if (requestId === this.listRequestId) {
-          this.tickets = tickets
+          this.tickets = result.items
+          this.pagination = {
+            page: result.page,
+            pageSize: result.pageSize,
+            totalCount: result.totalCount,
+            totalPages: result.totalPages,
+          }
         }
       } catch (error: unknown) {
         if (requestId === this.listRequestId) {
@@ -77,7 +95,6 @@ export const useTicketsStore = defineStore('tickets', {
 
       try {
         const created = await createTicket(ticket)
-        this.tickets = [created, ...this.tickets]
         this.selectedTicket = created
         return created
       } catch (error: unknown) {
@@ -112,6 +129,8 @@ export const useTicketsStore = defineStore('tickets', {
       try {
         await deleteTicket(id)
         this.tickets = this.tickets.filter((ticket) => ticket.id !== id)
+        this.pagination.totalCount = Math.max(0, this.pagination.totalCount - 1)
+        this.pagination.totalPages = Math.ceil(this.pagination.totalCount / this.pagination.pageSize)
         if (this.selectedTicket?.id === id) {
           this.selectedTicket = null
         }

@@ -1,6 +1,6 @@
 using SupportDesk.Api.Domain;
 
-namespace SupportDesk.Api.Services;
+namespace SupportDesk.Api.Domain;
 
 public enum TicketSortField
 {
@@ -14,4 +14,6 @@ public sealed record TicketListQuery(
     TicketPriority? Priority,
     string? Search,
     TicketSortField SortBy,
-    bool SortDescending);
+    bool SortDescending,
+    int Page = 1,
+    int PageSize = 10);

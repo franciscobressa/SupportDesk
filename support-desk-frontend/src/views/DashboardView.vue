@@ -22,7 +22,14 @@ const filters = reactive<TicketListFilters>({
 const isCreateOpen = ref(false)
 const ticketToDelete = ref<Ticket | null>(null)
 const actionError = ref('')
+const currentHour = ref(new Date().getHours())
+const greeting = computed(() => {
+  if (currentHour.value < 12) return 'Good morning'
+  if (currentHour.value < 18) return 'Good afternoon'
+  return 'Good evening'
+})
 let filterTimer: number | undefined
+let greetingTimer: number | undefined
 
 const tickets = computed<Ticket[]>(() => ticketsStore.tickets)
 const hasActiveFilters = computed(() => Boolean(filters.search || filters.status || filters.priority))
@@ -93,10 +100,14 @@ function getErrorMessage(error: unknown): string {
 
 onMounted(() => {
   void fetchTickets()
+  greetingTimer = window.setInterval(() => {
+    currentHour.value = new Date().getHours()
+  }, 60_000)
 })
 
 onBeforeUnmount(() => {
   window.clearTimeout(filterTimer)
+  window.clearInterval(greetingTimer)
 })
 </script>
 
@@ -106,7 +117,7 @@ onBeforeUnmount(() => {
       <section class="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Overview</p>
-          <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Good morning, Manager <span aria-hidden="true">✦</span></h1>
+          <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ greeting }}, Manager <span aria-hidden="true">✦</span></h1>
           <p class="mt-2 text-sm text-slate-500">Here’s what’s happening with your support queue today.</p>
         </div>
         <button type="button" class="button-primary self-start sm:self-auto" @click="isCreateOpen = true; actionError = ''">

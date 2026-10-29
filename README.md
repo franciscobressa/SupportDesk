@@ -69,6 +69,10 @@ Set `VITE_API_BASE_URL` in the frontend project's build environment to `https://
 
 **Demo limitation:** this deployment intentionally keeps SQLite to avoid changing the approved take-home database design. Vercel container filesystems are not persistent, and scaled instances do not share their local SQLite files. Ticket changes may disappear after an instance is replaced and different instances may show different seeded data. Do not use this deployment for durable or real customer data; use managed PostgreSQL before production.
 
+### Deploy the frontend to Vercel
+
+Create a separate Vercel project with **Root Directory** set to `support-desk-frontend`, and set `VITE_API_BASE_URL` to the deployed API URL ending in `/api`. The frontend's `vercel.json` rewrites page requests to `index.html`, so Vue Router routes such as `/tickets/{id}` also work when opened directly or refreshed.
+
 Build and run the container locally from the backend directory:
 
 ```powershell

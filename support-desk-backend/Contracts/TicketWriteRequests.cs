@@ -1,0 +1,59 @@
+using System.ComponentModel.DataAnnotations;
+using SupportDesk.Api.Domain;
+
+namespace SupportDesk.Api.Contracts;
+
+public abstract class TicketWriteRequest : IValidatableObject
+{
+    [Required]
+    [StringLength(120)]
+    public string Title { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(5000)]
+    public string Description { get; set; } = string.Empty;
+
+    [StringLength(120)]
+    public string? CustomerName { get; set; }
+
+    [EmailAddress]
+    [StringLength(254)]
+    public string? CustomerEmail { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(CustomerName) && string.IsNullOrWhiteSpace(CustomerEmail))
+        {
+            yield return new ValidationResult(
+                "At least one customer name or email is required.",
+                [nameof(CustomerName), nameof(CustomerEmail)]);
+        }
+    }
+}
+
+public sealed class CreateTicketRequest : TicketWriteRequest
+{
+    [EnumDataType(typeof(TicketStatus))]
+    public TicketStatus? Status { get; set; }
+
+    [EnumDataType(typeof(TicketPriority))]
+    public TicketPriority? Priority { get; set; }
+}
+
+public sealed class UpdateTicketRequest : TicketWriteRequest
+{
+    [Required]
+    [EnumDataType(typeof(TicketStatus))]
+    public TicketStatus? Status { get; set; }
+
+    [Required]
+    [EnumDataType(typeof(TicketPriority))]
+    public TicketPriority? Priority { get; set; }
+}
+
+public sealed class CreateCommentRequest
+{
+    [Required]
+    [StringLength(2000)]
+    public string Text { get; set; } = string.Empty;
+}

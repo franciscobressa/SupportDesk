@@ -119,6 +119,26 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
     }
 
     [Theory]
+    [InlineData("asc", false)]
+    [InlineData("desc", true)]
+    public async Task GetTicketsAsync_SortsByCreatedAtInRequestedDirection(
+        string direction,
+        bool descending)
+    {
+        var result = await _client.GetFromJsonAsync<JsonElement>(
+            $"/api/tickets?pageSize=25&sortBy=createdAt&sortDirection={direction}");
+
+        var createdAtDates = result.GetProperty("items").EnumerateArray()
+            .Select(ticket => ticket.GetProperty("createdAt").GetDateTimeOffset())
+            .ToArray();
+
+        Assert.Equal(25, createdAtDates.Length);
+        Assert.All(
+            createdAtDates.Zip(createdAtDates.Skip(1)),
+            pair => Assert.True(descending ? pair.First >= pair.Second : pair.First <= pair.Second));
+    }
+
+    [Theory]
     [InlineData("/api/tickets?status=Unknown")]
     [InlineData("/api/tickets?sortBy=unknown")]
     [InlineData("/api/tickets?sortDirection=sideways")]

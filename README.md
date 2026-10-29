@@ -31,6 +31,20 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 - Ticket search, filtering, sorting, and server-side pagination run in SQLite. The API returns 10 tickets per page by default and caps requested page sizes at 50.
 - The status timeline records status transitions only; comments remain separate. Authentication is omitted and activity authors use a fixed mock identity, as permitted by the assignment.
 
+## Extras beyond the brief
+
+- Server-side pagination returns only the requested page while preserving filtered result counts; this avoids transferring the full ticket list as it grows.
+- Status-change history makes ticket progress auditable in the detail view without mixing status events with customer comments.
+- The public demo is deployed as separate frontend and API projects, with direct Vue Router links supported by the frontend deployment rewrite.
+
+The demo API uses SQLite to stay within the assignment's lightweight-persistence scope. Vercel container storage is not durable or shared between instances, so demo changes can disappear or differ between instances; use a managed database before relying on persistent production data.
+
+## What I would improve with more time
+
+- Add automated frontend component and end-to-end tests for filtering, pagination, editing, and comments.
+- Add authentication and authorization before handling real customer data.
+- Add operational persistence and deployment safeguards, including a managed database, controlled migrations, and backups.
+
 ## Prerequisites
 
 - .NET 10 SDK
@@ -92,4 +106,4 @@ Run backend unit and HTTP integration tests (the tests use an isolated in-memory
 dotnet test .\SupportDesk.Api.Tests\SupportDesk.Api.Tests.csproj
 ```
 
-Backend tests cover ticket filtering and ordering, create/update/comment/delete rules, status history, request validation, and essential HTTP status codes. The frontend is type-checked during its build and its main workflows have been manually verified.
+Backend tests cover ticket filtering, ordering, and pagination, create/update/comment/delete rules, status history, request validation, and essential HTTP status codes. The frontend is type-checked during its build and its main workflows have been manually verified.

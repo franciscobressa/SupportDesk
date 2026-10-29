@@ -2,7 +2,7 @@
 
 Take-home assignment: a customer support dashboard built with ASP.NET Core Web API and Vue 3.
 
-**Status:** checkpoint 3 complete; the ticket API and Vue/TypeScript ticket workflows are implemented. Automated tests remain.
+**Status:** checkpoints 1–4 complete; the ticket API, Vue/TypeScript workflows, and focused backend tests are implemented.
 
 ## Stack and architecture
 
@@ -84,3 +84,11 @@ Run only the Vue and TypeScript checks:
 cd support-desk-frontend
 npm run type-check
 ```
+
+Run backend unit and HTTP integration tests (the tests use an isolated in-memory SQLite database):
+
+```powershell
+dotnet test .\SupportDesk.Api.Tests\SupportDesk.Api.Tests.csproj
+```
+
+The backend tests cover ticket filtering and ordering, create/update/comment/delete rules, status history, request validation, and essential HTTP status codes. Frontend component and E2E automation remain out of scope; the frontend is type-checked and its main flows are manually smoke-tested.

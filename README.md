@@ -18,8 +18,6 @@ A customer support dashboard for managing tickets, built with ASP.NET Core Web A
 - Backend layers: controllers, application services, and a domain-specific `ITicketRepository` backed by EF Core.
 - Frontend boundaries: views coordinate route-level state and workflows; `AppShell` owns shared navigation, while focused components render filters, ticket rows, forms, comments, status history, and dialogs. Pinia owns shared ticket state and the API module owns HTTP communication.
 
-See [`ARCHITECTURE_DECISIONS.md`](./ARCHITECTURE_DECISIONS.md) for the reasoning behind the frontend and backend design, trade-offs, and potential evolution paths.
-
 ### Design decisions and trade-offs
 
 - `ITicketRepository` keeps application services independent of EF Core and gives the ticket domain a focused persistence contract. A generic repository or separate Unit of Work would add indirection without a concrete need in this small application.

@@ -3,6 +3,11 @@
 A customer support dashboard for managing tickets, built with ASP.NET Core Web API and Vue 3.
 
 Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-desk-frontend-rouge.vercel.app/)
+
+## Screenshots
+
+<!-- Add a screenshot here, for example: ![Support Desk dashboard](./docs/screenshots/dashboard.png) -->
+
 ## Features
 
 - Browse, search, filter, and sort support tickets.
@@ -23,7 +28,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 
 - `ITicketRepository` keeps application services independent of EF Core and gives the ticket domain a focused persistence contract. A generic repository or separate Unit of Work would add indirection without a concrete need in this small application.
 - SQLite avoids an external database service while preserving data between runs. EF Core migrations keep the schema explicit and reproducible.
-- The take-home uses a small seeded ticket set, so list filtering and ordering run in the service without pagination. A larger dataset should move those operations into database queries and add pagination.
+- Ticket search, filtering, sorting, and server-side pagination run in SQLite. The API returns 10 tickets per page by default and caps requested page sizes at 50.
 - The status timeline records status transitions only; comments remain separate. Authentication is omitted and activity authors use a fixed mock identity, as permitted by the assignment.
 
 ## Prerequisites
@@ -56,7 +61,7 @@ The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`
 
 ## API
 
-- `GET /api/tickets`: filter by `status`, `priority`, and `search`; sort by `createdAt`, `priority`, or `status` using `sortDirection=asc|desc`.
+- `GET /api/tickets`: filter by `status`, `priority`, and `search`; sort by `createdAt`, `priority`, or `status` using `sortDirection=asc|desc`; paginate with `page` (default `1`) and `pageSize` (default `10`, maximum `50`). The response contains `items`, `page`, `pageSize`, `totalCount`, and `totalPages`.
 - `GET /api/tickets/{id}`: ticket details, comments, and status history.
 - `POST /api/tickets`: create a ticket.
 - `PUT /api/tickets/{id}`: update a ticket; status changes are recorded in its history.

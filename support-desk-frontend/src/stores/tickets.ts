@@ -16,6 +16,8 @@ import {
   updateTicket,
 } from '../services/ticketsApi'
 
+const minimumListLoadingDurationMs = 400
+
 export const useTicketsStore = defineStore('tickets', {
   state: () => ({
     tickets: [] as Ticket[],
@@ -46,6 +48,7 @@ export const useTicketsStore = defineStore('tickets', {
   actions: {
     async fetchTickets(filters: TicketListFilters = {}) {
       const requestId = ++this.listRequestId
+      const loadingStartedAt = Date.now()
       this.listLoading = true
       this.listError = ''
 
@@ -67,6 +70,13 @@ export const useTicketsStore = defineStore('tickets', {
         }
         throw error
       } finally {
+        const remainingLoadingTime = minimumListLoadingDurationMs - (Date.now() - loadingStartedAt)
+        if (remainingLoadingTime > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, remainingLoadingTime)
+          })
+        }
+
         if (requestId === this.listRequestId) {
           this.listLoading = false
         }

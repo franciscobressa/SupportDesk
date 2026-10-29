@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          v-if="ticketsStore.listLoading && !tickets.length"
+          v-if="ticketsStore.listLoading"
           class="space-y-3 p-6"
           aria-label="Loading tickets"
         >

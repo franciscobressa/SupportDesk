@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="ticketsStore.listLoading && !tickets.length" class="space-y-3 p-6" aria-label="Loading tickets">
-          <div v-for="item in 5" :key="item" class="h-16 animate-pulse rounded-xl bg-slate-100" />
+          <div v-for="item in 5" :key="item" class="h-56 animate-pulse rounded-xl bg-slate-100 sm:h-16" />
         </div>
 
         <div v-else-if="!tickets.length && !ticketsStore.listError" class="px-6 py-16 text-center">

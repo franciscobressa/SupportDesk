@@ -13,7 +13,8 @@ interface ApiProblem {
   errors?: Record<string, string[]>
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || '/api'
+const apiBaseUrl = configuredApiBaseUrl.replace(/\/+$/, '')
 
 async function request(path: string, options: RequestInit = {}): Promise<Response> {
   const response = await fetch(`${apiBaseUrl}${path}`, {

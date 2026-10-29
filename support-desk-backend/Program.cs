@@ -7,6 +7,12 @@ using SupportDesk.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -34,10 +40,12 @@ builder.Services.AddDbContext<SupportDeskDbContext>(options =>
 builder.Services.AddScoped<ITicketRepository, EfCoreTicketRepository>();
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddSingleton(TimeProvider.System);
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? throw new InvalidOperationException("At least one CORS origin must be configured.");
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod());
 });

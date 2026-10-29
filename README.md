@@ -6,7 +6,9 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 
 ## Screenshots
 
-<!-- Add a screenshot here, for example: ![Support Desk dashboard](./docs/screenshots/dashboard.png) -->
+<img width="1892" height="900" alt="image" src="https://github.com/user-attachments/assets/046c15b5-5a16-4088-9cbd-b1ea2ea24999" />
+<img width="1917" height="897" alt="image" src="https://github.com/user-attachments/assets/af0d087c-793e-4e8a-9738-3a16563d69a6" />
+<img width="1887" height="892" alt="image" src="https://github.com/user-attachments/assets/28681ee6-8227-45d8-a2d6-bac6f8830215" />
 
 ## Features
 

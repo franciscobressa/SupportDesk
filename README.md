@@ -16,6 +16,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 - Create, edit, and delete tickets.
 - View ticket details, customer information, comments, and status history.
 - Add comments and track status changes.
+- Switch between light and dark themes; the selected theme is saved in the browser.
 - Persistent SQLite storage with sample tickets for local development.
 
 ## Stack and architecture

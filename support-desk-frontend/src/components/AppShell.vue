@@ -1,9 +1,28 @@
 <script setup lang="ts">
+import { onMounted, ref, watch } from 'vue'
+
 withDefaults(defineProps<{
   pageTitle: string
   breadcrumbs?: string[]
 }>(), {
   breadcrumbs: () => ['Workspace', 'Tickets'],
+})
+
+const isDarkMode = ref(localStorage.getItem('support-desk-theme') === 'dark')
+
+function toggleTheme(): void {
+  isDarkMode.value = !isDarkMode.value
+}
+
+function applyTheme(isDark: boolean): void {
+  document.documentElement.classList.toggle('dark', isDark)
+  localStorage.setItem('support-desk-theme', isDark ? 'dark' : 'light')
+}
+
+watch(isDarkMode, applyTheme, { flush: 'sync' })
+
+onMounted(() => {
+  document.documentElement.classList.toggle('dark', isDarkMode.value)
 })
 </script>
 
@@ -66,7 +85,25 @@ withDefaults(defineProps<{
             </p>
           </div>
         </div>
-        <div class="grid size-9 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">SM</div>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="button-icon"
+            :aria-label="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            :aria-pressed="isDarkMode"
+            :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            @click="toggleTheme"
+          >
+            <svg v-if="isDarkMode" viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7" />
+              <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
+              <path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="grid size-9 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">SM</div>
+        </div>
       </header>
 
       <slot />

@@ -1,8 +1,5 @@
 **/bin/
 **/obj/
-App_Data/
-*.db
-*.db-shm
-*.db-wal
+.env
 .vs/
 .git/

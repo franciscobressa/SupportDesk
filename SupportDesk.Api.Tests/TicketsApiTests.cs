@@ -5,9 +5,64 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SupportDesk.Api.Tests;
 
-public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<TicketApiFactory>
+public sealed class TicketsApiTests : IClassFixture<PostgresDatabaseFixture>, IDisposable
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly TicketApiFactory _factory;
+    private readonly HttpClient _client;
+    private readonly string _connectionString;
+
+    public TicketsApiTests(PostgresDatabaseFixture fixture)
+    {
+        _connectionString = fixture.ConnectionString;
+        _factory = new TicketApiFactory(_connectionString);
+        _client = _factory.CreateClient();
+    }
+
+    [Fact]
+    public async Task GetTicketsAsync_ReturnsSeededDemoTickets()
+    {
+        using var listResponse = await _client.GetAsync("/api/tickets");
+
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        using var tickets = await JsonDocument.ParseAsync(await listResponse.Content.ReadAsStreamAsync());
+        Assert.Equal(25, tickets.RootElement.GetArrayLength());
+
+        using var detailsResponse = await _client.GetAsync(
+            "/api/tickets/10000000-0000-0000-0000-000000000002");
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        using var details = await JsonDocument.ParseAsync(await detailsResponse.Content.ReadAsStreamAsync());
+        Assert.NotEmpty(details.RootElement.GetProperty("comments").EnumerateArray());
+        Assert.NotEmpty(details.RootElement.GetProperty("statusChanges").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task CreatedTicket_IsVisibleFromAnotherApiInstance()
+    {
+        using var createResponse = await _client.PostAsJsonAsync(
+            "/api/tickets",
+            new
+            {
+                title = "Shared PostgreSQL persistence test",
+                description = "A second API instance should read the same database record.",
+                customerName = "Test Customer",
+                status = "Open",
+                priority = "Medium"
+            });
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        using var createdTicket = await JsonDocument.ParseAsync(
+            await createResponse.Content.ReadAsStreamAsync());
+        var ticketId = createdTicket.RootElement.GetProperty("id").GetGuid();
+
+        using var secondFactory = new TicketApiFactory(_connectionString);
+        using var secondClient = secondFactory.CreateClient();
+        using var getResponse = await secondClient.GetAsync($"/api/tickets/{ticketId}");
+
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+        using var deleteResponse = await _client.DeleteAsync($"/api/tickets/{ticketId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+    }
 
     [Theory]
     [InlineData("/api/tickets?status=Unknown")]
@@ -77,5 +132,11 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
 
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/tickets/{ticketId}")).StatusCode);
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
+        _factory.Dispose();
     }
 }

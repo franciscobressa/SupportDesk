@@ -92,10 +92,9 @@ Errors use ASP.NET Core `ProblemDetails` responses (`ValidationProblemDetails` f
 
 ## Build and test
 
-Build the API:
+Build the API and its tests from the repository root (`SupportDesk.slnx` includes both projects):
 
 ```powershell
-cd support-desk-backend
 dotnet build
 ```
 
@@ -106,10 +105,10 @@ cd support-desk-frontend
 npm run build
 ```
 
-Run backend unit and HTTP integration tests (the tests use an isolated in-memory SQLite database):
+Run the backend tests from the repository root (they use isolated in-memory SQLite databases and never touch the local database):
 
 ```powershell
-dotnet test .\SupportDesk.Api.Tests\SupportDesk.Api.Tests.csproj
+dotnet test
 ```
 
 Backend tests are organized by layer: domain rules, use cases (with a hand-written fake repository and a fixed clock), the HTTP contract (filtering, sorting, pagination, validation, `404`/`409` responses), persistence against real SQLite (search escaping, optimistic concurrency, seeding), and layer dependency rules (architecture tests with NetArchTest). The frontend is type-checked during its build and its main workflows have been manually verified.

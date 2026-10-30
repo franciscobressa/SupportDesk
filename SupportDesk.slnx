@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="support-desk-backend/SupportDesk.Api.csproj" />
+  <Project Path="support-desk-backend-tests/SupportDesk.Api.Tests.csproj" />
+</Solution>

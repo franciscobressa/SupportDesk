@@ -53,6 +53,42 @@ const firstTicketNumber = computed(() =>
     ? 0
     : (pagination.value.page - 1) * pagination.value.pageSize + 1,
 );
+type PageNavigationItem =
+  | { kind: "page"; page: number }
+  | { kind: "ellipsis"; id: string };
+
+const pageNavigationItems = computed<PageNavigationItem[]>(() => {
+  const totalPages = pagination.value.totalPages;
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => ({
+      kind: "page" as const,
+      page: index + 1,
+    }));
+  }
+
+  const visiblePages = new Set(
+    [1, currentPage.value - 1, currentPage.value, currentPage.value + 1, totalPages]
+      .filter((page) => page >= 1 && page <= totalPages),
+  );
+  const pages = [...visiblePages].sort((first, second) => first - second);
+  const items: PageNavigationItem[] = [];
+
+  pages.forEach((page, index) => {
+    const previousPage = pages[index - 1];
+    if (previousPage !== undefined) {
+      const gap = page - previousPage;
+      if (gap === 2) {
+        items.push({ kind: "page", page: previousPage + 1 });
+      } else if (gap > 2) {
+        items.push({ kind: "ellipsis", id: `${previousPage}-${page}` });
+      }
+    }
+
+    items.push({ kind: "page", page });
+  });
+
+  return items;
+});
 const lastTicketNumber = computed(() =>
   Math.min(
     pagination.value.page * pagination.value.pageSize,
@@ -468,37 +504,113 @@ onBeforeUnmount(() => {
             </p>
           </div>
           <nav
-            class="flex items-center justify-between gap-3"
+            class="flex flex-wrap items-center justify-center gap-2"
             aria-label="Ticket pages"
           >
-            <button
-              type="button"
-              class="button-secondary min-h-9 px-3 py-1.5"
-              :disabled="currentPage <= 1 || ticketsStore.listLoading"
-              @click="changePage(currentPage - 1)"
-            >
-              Previous
-            </button>
-            <p aria-live="polite">
+            <div class="hidden items-center gap-2 sm:flex">
+              <button
+                type="button"
+                class="button-secondary min-h-9 px-3 py-1.5"
+                :disabled="currentPage <= 1 || ticketsStore.listLoading"
+                @click="changePage(currentPage - 1)"
+              >
+                Previous
+              </button>
+              <template
+                v-for="item in pageNavigationItems"
+                :key="item.kind === 'page' ? item.page : item.id"
+              >
+                <span
+                  v-if="item.kind === 'ellipsis'"
+                  class="px-1 text-slate-400"
+                  aria-hidden="true"
+                >…</span>
+                <button
+                  v-else
+                  type="button"
+                  class="button-secondary min-h-9 min-w-9 px-2 py-1.5"
+                  :class="
+                    item.page === currentPage
+                      ? '!border-indigo-600 !bg-indigo-600 !text-white'
+                      : ''
+                  "
+                  :aria-label="`Go to page ${item.page}`"
+                  :aria-current="item.page === currentPage ? 'page' : undefined"
+                  :disabled="ticketsStore.listLoading"
+                  @click="changePage(item.page)"
+                >
+                  {{ item.page }}
+                </button>
+              </template>
+              <button
+                type="button"
+                class="button-secondary min-h-9 px-3 py-1.5"
+                :disabled="
+                  currentPage >= pagination.totalPages || ticketsStore.listLoading
+                "
+                @click="changePage(currentPage + 1)"
+              >
+                Next
+              </button>
+            </div>
+            <div class="grid w-full max-w-[12rem] grid-cols-4 gap-2 sm:hidden">
+              <button
+                type="button"
+                class="button-icon size-10"
+                aria-label="First page"
+                :disabled="currentPage <= 1 || ticketsStore.listLoading"
+                @click="changePage(1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
+                  <path d="m11 18-6-6 6-6M19 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="button-icon size-10"
+                aria-label="Previous page"
+                :disabled="currentPage <= 1 || ticketsStore.listLoading"
+                @click="changePage(currentPage - 1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
+                  <path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="button-icon size-10"
+                aria-label="Next page"
+                :disabled="currentPage >= pagination.totalPages || ticketsStore.listLoading"
+                @click="changePage(currentPage + 1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
+                  <path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="button-icon size-10"
+                aria-label="Last page"
+                :disabled="currentPage >= pagination.totalPages || ticketsStore.listLoading"
+                @click="changePage(pagination.totalPages)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
+                  <path d="m13 6 6 6-6 6M5 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+            <p class="basis-full text-center sm:hidden" aria-live="polite">
               Page
-              <span class="font-semibold text-slate-700">{{
-                pagination.page
-              }}</span>
+              <span class="font-semibold text-slate-700">{{ pagination.page }}</span>
               of
-              <span class="font-semibold text-slate-700">{{
-                pagination.totalPages
-              }}</span>
+              <span class="font-semibold text-slate-700">{{ pagination.totalPages }}</span>
             </p>
-            <button
-              type="button"
-              class="button-secondary min-h-9 px-3 py-1.5"
-              :disabled="
-                currentPage >= pagination.totalPages || ticketsStore.listLoading
-              "
-              @click="changePage(currentPage + 1)"
-            >
-              Next
-            </button>
+            <p class="hidden basis-full text-center sm:block" aria-live="polite">
+              Page
+              <span class="font-semibold text-slate-700">{{ pagination.page }}</span>
+              of
+              <span class="font-semibold text-slate-700">{{ pagination.totalPages }}</span>
+            </p>
           </nav>
         </div>
       </section>

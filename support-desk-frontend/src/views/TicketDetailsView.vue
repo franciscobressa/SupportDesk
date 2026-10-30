@@ -26,6 +26,13 @@ const ticketId = computed(() => {
 
 const ticket = computed(() => ticketsStore.selectedTicket)
 
+// Return to the dashboard entry the user came from so its URL filters and page are kept.
+const previousPath = router.options.history.state.back
+const dashboardLocation =
+  typeof previousPath === 'string' && router.resolve(previousPath).name === 'dashboard'
+    ? previousPath
+    : { name: 'dashboard' }
+
 async function loadTicket(id: string): Promise<void> {
   isEditing.value = false
   actionError.value = ''
@@ -34,6 +41,14 @@ async function loadTicket(id: string): Promise<void> {
     await ticketsStore.fetchTicket(id)
   } catch {
     // The store exposes the request error to the page.
+    return
+  }
+
+  if (route.query.edit === '1') {
+    isEditing.value = true
+    // Drop the flag so a reload or a later visit opens the read-only view.
+    const { edit: _edit, ...query } = route.query
+    await router.replace({ query })
   }
 }
 
@@ -70,7 +85,7 @@ async function deleteTicket(): Promise<void> {
   try {
     await ticketsStore.removeTicket(ticketId.value)
     isDeleteOpen.value = false
-    await router.push({ name: 'dashboard' })
+    await router.push(dashboardLocation)
   } catch (error: unknown) {
     actionError.value = getErrorMessage(error)
   }
@@ -94,7 +109,7 @@ function getErrorMessage(error: unknown): string {
 <template>
   <AppShell page-title="Ticket details" :breadcrumbs="['Workspace', 'Tickets', 'Details']">
     <main class="mx-auto max-w-[1320px] px-5 py-7 sm:px-8 lg:px-10 lg:py-9">
-      <RouterLink to="/" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-indigo-700">
+      <RouterLink :to="dashboardLocation" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-indigo-700">
         <svg viewBox="0 0 24 24" fill="none" class="size-4" aria-hidden="true">
           <path d="m14.5 5-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
@@ -117,7 +132,7 @@ function getErrorMessage(error: unknown): string {
         </span>
         <h1 class="mt-4 text-xl font-bold text-slate-900">Ticket unavailable</h1>
         <p class="mt-2 text-sm text-slate-500">{{ ticketsStore.detailError }}</p>
-        <RouterLink to="/" class="button-primary mx-auto mt-5">Return to dashboard</RouterLink>
+        <RouterLink :to="dashboardLocation" class="button-primary mx-auto mt-5">Return to dashboard</RouterLink>
       </section>
 
       <template v-else-if="ticket">

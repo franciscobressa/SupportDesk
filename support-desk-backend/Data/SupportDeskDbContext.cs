@@ -11,6 +11,13 @@ public sealed class SupportDeskDbContext(DbContextOptions<SupportDeskDbContext> 
 
     public DbSet<TicketStatusChange> TicketStatusChanges => Set<TicketStatusChange>();
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder
+            .Properties<DateTimeOffset>()
+            .HaveConversion<DateTimeOffsetToUtcTicksConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Ticket>(entity =>

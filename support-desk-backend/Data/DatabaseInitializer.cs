@@ -12,14 +12,13 @@ public static class DatabaseInitializer
 
         await dbContext.Database.MigrateAsync(cancellationToken);
 
-        var existingTicketCount = await dbContext.Tickets.CountAsync(cancellationToken);
-        const int demoTicketCount = 25;
-        if (existingTicketCount >= demoTicketCount)
+        // Seed only an empty database so tickets deleted by users are not recreated on restart.
+        if (await dbContext.Tickets.AnyAsync(cancellationToken))
         {
             return;
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow();
         var demoTickets = new[]
         {
             CreateTicket(
@@ -240,10 +239,7 @@ public static class DatabaseInitializer
                 TicketStatus.Open)
         };
 
-        dbContext.Tickets.AddRange(demoTickets
-            .Skip(existingTicketCount)
-            .Take(demoTicketCount - existingTicketCount));
-
+        dbContext.Tickets.AddRange(demoTickets);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

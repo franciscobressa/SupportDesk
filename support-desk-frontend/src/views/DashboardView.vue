@@ -7,7 +7,7 @@ import {
   ref,
   watch,
 } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import AppShell from "../components/AppShell.vue";
 import BaseDialog from "../components/BaseDialog.vue";
 import ConfirmDialog from "../components/ConfirmDialog.vue";
@@ -21,18 +21,18 @@ import type {
   TicketStatus,
   TicketWriteRequest,
 } from "../types/tickets";
+import {
+  defaultTicketListFilters,
+  filtersFromQuery,
+  filtersToQuery,
+} from "../utils/ticketListQuery";
 
+const route = useRoute();
 const router = useRouter();
 const ticketsStore = useTicketsStore();
-const filters = reactive<TicketListFilters>({
-  search: "",
-  status: "",
-  priority: "",
-  sortBy: "createdAt",
-  sortDirection: "desc",
-  page: 1,
-  pageSize: 10,
-});
+// The URL is the persisted source of the list criteria: it survives reloads, can be shared,
+// and restores the same view when the user comes back from ticket details.
+const filters = reactive<TicketListFilters>(filtersFromQuery(route.query));
 const isCreateOpen = ref(false);
 const ticketToDelete = ref<Ticket | null>(null);
 const actionError = ref("");
@@ -107,19 +107,18 @@ async function fetchTickets(): Promise<void> {
     await ticketsStore.fetchTickets(filters);
   } catch {
     // The store exposes the request error in the list state.
+    return;
+  }
+
+  // A restored or shared URL can point past the last page; move to the last page that has results.
+  const { totalPages } = ticketsStore.pagination;
+  if (!ticketsStore.listLoading && totalPages > 0 && currentPage.value > totalPages) {
+    filters.page = totalPages;
   }
 }
 
 function clearFilters(): void {
-  Object.assign(filters, {
-    search: "",
-    status: "",
-    priority: "",
-    sortBy: "createdAt",
-    sortDirection: "desc",
-    page: 1,
-    pageSize: 10,
-  });
+  Object.assign(filters, defaultTicketListFilters);
 }
 
 function updateFilters(nextFilters: TicketListFilters): void {
@@ -187,6 +186,8 @@ watch(
   () => {
     window.clearTimeout(filterTimer);
     filterTimer = window.setTimeout(() => {
+      // replace (not push) so typing or paging does not flood the browser history.
+      void router.replace({ query: filtersToQuery(filters) });
       void fetchTickets();
     }, 250);
   },

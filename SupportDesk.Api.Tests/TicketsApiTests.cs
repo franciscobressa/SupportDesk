@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using SupportDesk.Api.Data;
 
 namespace SupportDesk.Api.Tests;
 
@@ -25,6 +26,24 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
         Assert.Equal(7, summary.GetProperty("inProgress").GetInt32());
         Assert.Equal(5, summary.GetProperty("resolved").GetInt32());
         Assert.Equal(10, summary.GetProperty("highPriority").GetInt32());
+    }
+
+    [Fact]
+    public async Task DatabaseInitializer_DoesNotRecreateDeletedDemoTicketsOnRestart()
+    {
+        // Uses its own database because it deletes a demo ticket the other tests count on.
+        await using var isolatedFactory = new TicketApiFactory();
+        var client = isolatedFactory.CreateClient();
+        var firstPage = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
+        var deletedTicketId = firstPage.GetProperty("items")[0].GetProperty("id").GetGuid();
+        var deleteResponse = await client.DeleteAsync($"/api/tickets/{deletedTicketId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        await DatabaseInitializer.InitializeAsync(isolatedFactory.Services);
+
+        var result = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
+        Assert.Equal(24, result.GetProperty("totalCount").GetInt32());
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/tickets/{deletedTicketId}")).StatusCode);
     }
 
     [Fact]

@@ -81,6 +81,15 @@ function toggleDescription(ticketId: string): void {
         >
           View ticket
         </RouterLink>
+        <RouterLink
+          :to="{ name: 'ticket-details', params: { id: ticket.id }, query: { edit: '1' } }"
+          class="button-icon size-10 shrink-0 border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-indigo-700"
+          :aria-label="`Edit ${ticket.title}`"
+        >
+          <svg viewBox="0 0 24 24" fill="none" class="size-[17px]" aria-hidden="true">
+            <path d="m14 5 5 5M4 20l4.3-.9L19 8.4 15.6 5 4.9 15.7 4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </RouterLink>
         <button
           type="button"
           class="button-icon size-10 shrink-0 border-transparent text-slate-500 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600"
@@ -137,6 +146,15 @@ function toggleDescription(ticketId: string): void {
                 <svg viewBox="0 0 24 24" fill="none" class="size-[17px]" aria-hidden="true">
                   <path d="M2.5 12s3.2-6 9.5-6 9.5 6 9.5 6-3.2 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7" />
                   <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+              </RouterLink>
+              <RouterLink
+                :to="{ name: 'ticket-details', params: { id: ticket.id }, query: { edit: '1' } }"
+                class="button-icon size-8 border-transparent opacity-70 hover:border-slate-200 hover:bg-white hover:opacity-100"
+                :aria-label="`Edit ${ticket.title}`"
+              >
+                <svg viewBox="0 0 24 24" fill="none" class="size-[17px]" aria-hidden="true">
+                  <path d="m14 5 5 5M4 20l4.3-.9L19 8.4 15.6 5 4.9 15.7 4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </RouterLink>
               <button

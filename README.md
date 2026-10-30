@@ -12,8 +12,8 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 
 ## Features
 
-- Browse, search, filter, and sort support tickets.
-- Create, edit, and delete tickets.
+- Browse, search, filter, and sort support tickets; the list criteria live in the URL, so they survive a reload and are restored when returning from a ticket.
+- Create, edit, and delete tickets, with view, edit, and delete actions directly in the list.
 - View ticket details, customer information, comments, and status history.
 - Add comments and track status changes.
 - Switch between light and dark themes; the selected theme is saved in the browser.
@@ -23,7 +23,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 
 - ASP.NET Core Web API with C#.
 - Vue 3 and TypeScript SPA with Vue Router, Pinia, and Tailwind CSS.
-- Persistence: SQLite with EF Core; migrations are applied at startup and demo data is added until the database contains at least 25 tickets.
+- Persistence: SQLite with EF Core; migrations are applied at startup and 25 demo tickets are seeded only when the database is empty. Timestamps are stored as UTC ticks so SQLite can sort them natively.
 - Backend layers: controllers, application services, and a domain-specific `ITicketRepository` backed by EF Core.
 - Frontend boundaries: views coordinate route-level state and workflows; `AppShell` owns shared navigation, while focused components render filters, ticket rows, forms, comments, status history, and dialogs. Pinia owns shared ticket state and the API module owns HTTP communication.
 
@@ -37,6 +37,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 ## Extras beyond the brief
 
 - Server-side pagination returns only the requested page while preserving filtered result counts; this avoids transferring the full ticket list as it grows.
+- Dashboard filters, sorting, and page are kept in the URL: a manager can open a ticket and come back to the same filtered view, reload, or share the link.
 - Dashboard summary cards show global ticket counts by status and high priority, and act as quick filters for queue triage.
 - Status-change history makes ticket progress auditable in the detail view without mixing status events with customer comments.
 - The public demo is deployed as separate frontend and API projects, with direct Vue Router links supported by the frontend deployment rewrite.
@@ -75,7 +76,7 @@ npm run dev
 
 Vite serves the frontend at `http://localhost:5173` and proxies `/api` requests to `http://localhost:5131`.
 
-The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`, relative to the API project regardless of the shell's working directory. Startup applies EF Core migrations and fills the database with demo tickets until it contains 25 tickets. Existing tickets are kept; a local database that already contains more than 25 tickets is unchanged.
+The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`, relative to the API project regardless of the shell's working directory. Startup applies EF Core migrations and seeds 25 demo tickets only when the database has no tickets, so deleted tickets are not recreated on restart.
 
 ## API
 

@@ -94,22 +94,22 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
         return query.SortBy switch
         {
             TicketSortField.CreatedAt when query.SortDescending =>
-                tickets.OrderByDescending(ticket => ticket.CreatedAt.ToString()).ThenBy(ticket => ticket.Id),
+                tickets.OrderByDescending(ticket => ticket.CreatedAt).ThenBy(ticket => ticket.Id),
             TicketSortField.CreatedAt =>
-                tickets.OrderBy(ticket => ticket.CreatedAt.ToString()).ThenBy(ticket => ticket.Id),
+                tickets.OrderBy(ticket => ticket.CreatedAt).ThenBy(ticket => ticket.Id),
             TicketSortField.Priority when query.SortDescending =>
                 tickets.OrderByDescending(ticket =>
                         ticket.Priority == TicketPriority.High ? 3
                         : ticket.Priority == TicketPriority.Medium ? 2
                         : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenByDescending(ticket => ticket.CreatedAt)
                     .ThenBy(ticket => ticket.Id),
             TicketSortField.Priority =>
                 tickets.OrderBy(ticket =>
                         ticket.Priority == TicketPriority.High ? 3
                         : ticket.Priority == TicketPriority.Medium ? 2
                         : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenByDescending(ticket => ticket.CreatedAt)
                     .ThenBy(ticket => ticket.Id),
             TicketSortField.Status when query.SortDescending =>
                 tickets.OrderByDescending(ticket =>
@@ -117,7 +117,7 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
                         : ticket.Status == TicketStatus.Resolved ? 3
                         : ticket.Status == TicketStatus.InProgress ? 2
                         : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenByDescending(ticket => ticket.CreatedAt)
                     .ThenBy(ticket => ticket.Id),
             TicketSortField.Status =>
                 tickets.OrderBy(ticket =>
@@ -125,7 +125,7 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
                         : ticket.Status == TicketStatus.Resolved ? 3
                         : ticket.Status == TicketStatus.InProgress ? 2
                         : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt.ToString())
+                    .ThenByDescending(ticket => ticket.CreatedAt)
                     .ThenBy(ticket => ticket.Id),
             _ => throw new ArgumentOutOfRangeException(nameof(query.SortBy))
         };

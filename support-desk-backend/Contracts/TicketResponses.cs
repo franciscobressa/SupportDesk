@@ -2,9 +2,6 @@ using SupportDesk.Api.Domain;
 
 namespace SupportDesk.Api.Contracts;
 
-// Each response maps itself from the domain through a From... factory, so the mapping for a
-// given shape lives in exactly one place.
-
 public sealed record TicketListItemResponse(
     Guid Id,
     string Title,

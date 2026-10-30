@@ -1,13 +1,11 @@
 using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using SupportDesk.Api.Data;
 using SupportDesk.Api.ErrorHandling;
-using SupportDesk.Api.Repositories;
 using SupportDesk.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Container platforms (Vercel) assign the port through PORT; locally the launch profile decides.
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(port))
 {
@@ -23,27 +21,13 @@ builder.Services
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<TicketConcurrencyExceptionHandler>();
-var connectionString = builder.Configuration.GetConnectionString("SupportDesk")
-    ?? throw new InvalidOperationException("The SupportDesk connection string is not configured.");
-var sqliteConnection = new SqliteConnectionStringBuilder(connectionString);
-if (!Path.IsPathRooted(sqliteConnection.DataSource))
-{
-    sqliteConnection.DataSource = Path.Combine(builder.Environment.ContentRootPath, sqliteConnection.DataSource);
-}
-
-var databaseDirectory = Path.GetDirectoryName(sqliteConnection.DataSource);
-if (!string.IsNullOrEmpty(databaseDirectory))
-{
-    Directory.CreateDirectory(databaseDirectory);
-}
-
-builder.Services.AddDbContext<SupportDeskDbContext>(options =>
-    options.UseSqlite(sqliteConnection.ToString()));
-builder.Services.AddScoped<ITicketRepository, EfCoreTicketRepository>();
+builder.Services.AddSupportDeskPersistence(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddCors(options =>
 {
+    // Open for the public demo only: the API has no authentication or private data.
+    // Restrict to the frontend origins before adding either.
     options.AddPolicy("Frontend", policy =>
         policy.AllowAnyOrigin()
             .AllowAnyHeader()
@@ -63,10 +47,12 @@ app.UseCors("Frontend");
 app.UseAuthorization();
 app.MapControllers();
 
+// Fine for a single-instance demo; production would run migrations as a deployment step.
 await DatabaseInitializer.InitializeAsync(app.Services);
 
 app.Run();
 
+// Makes the entry point visible to WebApplicationFactory<Program> in the integration tests.
 public partial class Program
 {
 }

@@ -10,7 +10,6 @@ public interface ITicketRepository
 {
     Task<TicketPage> GetPageAsync(TicketListQuery query, CancellationToken cancellationToken);
 
-    /// <summary>Queue-wide counts, independent of any list filter.</summary>
     Task<TicketSummary> GetSummaryAsync(CancellationToken cancellationToken);
 
     Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken);

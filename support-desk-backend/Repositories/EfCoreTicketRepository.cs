@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using SupportDesk.Api.Data;
 using SupportDesk.Api.Domain;
@@ -6,18 +7,20 @@ namespace SupportDesk.Api.Repositories;
 
 public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITicketRepository
 {
+    // Enums are stored as strings for readability, so their domain order is expressed as SQL CASE ranks.
+    private static readonly Expression<Func<Ticket, int>> PriorityRank = ticket =>
+        ticket.Priority == TicketPriority.High ? 3
+        : ticket.Priority == TicketPriority.Medium ? 2
+        : 1;
+
+    private static readonly Expression<Func<Ticket, int>> StatusRank = ticket =>
+        ticket.Status == TicketStatus.Closed ? 4
+        : ticket.Status == TicketStatus.Resolved ? 3
+        : ticket.Status == TicketStatus.InProgress ? 2
+        : 1;
+
     public async Task<TicketPage> GetPageAsync(TicketListQuery query, CancellationToken cancellationToken)
     {
-        var summary = await dbContext.Tickets
-            .GroupBy(_ => 1)
-            .Select(tickets => new TicketSummary(
-                tickets.Count(ticket => ticket.Status == TicketStatus.Open),
-                tickets.Count(ticket => ticket.Status == TicketStatus.InProgress),
-                tickets.Count(ticket => ticket.Status == TicketStatus.Resolved),
-                tickets.Count(ticket => ticket.Priority == TicketPriority.High)))
-            .SingleOrDefaultAsync(cancellationToken)
-            ?? new TicketSummary(0, 0, 0, 0);
-
         IQueryable<Ticket> tickets = dbContext.Tickets.AsNoTracking();
 
         if (query.Status is not null)
@@ -42,16 +45,28 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
         }
 
         var totalCount = await tickets.CountAsync(cancellationToken);
-        var orderedTickets = ApplyOrdering(tickets, query);
         var offset = (long)(query.Page - 1) * query.PageSize;
         var pageTickets = offset > int.MaxValue
             ? []
-            : await orderedTickets
+            : await ApplyOrdering(tickets, query)
                 .Skip((int)offset)
                 .Take(query.PageSize)
                 .ToListAsync(cancellationToken);
 
-        return new TicketPage(pageTickets, totalCount, summary);
+        return new TicketPage(pageTickets, totalCount);
+    }
+
+    public async Task<TicketSummary> GetSummaryAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Tickets
+                .GroupBy(_ => 1)
+                .Select(tickets => new TicketSummary(
+                    tickets.Count(ticket => ticket.Status == TicketStatus.Open),
+                    tickets.Count(ticket => ticket.Status == TicketStatus.InProgress),
+                    tickets.Count(ticket => ticket.Status == TicketStatus.Resolved),
+                    tickets.Count(ticket => ticket.Priority == TicketPriority.High)))
+                .SingleOrDefaultAsync(cancellationToken)
+            ?? new TicketSummary(0, 0, 0, 0);
     }
 
     public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -69,20 +84,17 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Ticket ticket, CancellationToken cancellationToken)
+    // Tickets come from GetByIdAsync on this same scoped context, so change tracking already
+    // knows what was modified or added.
+    public Task UpdateAsync(Ticket ticket, CancellationToken cancellationToken)
     {
-        if (dbContext.Entry(ticket).State == EntityState.Detached)
-        {
-            dbContext.Tickets.Update(ticket);
-        }
-
-        await SaveTicketChangesAsync(ticket, cancellationToken);
+        return SaveTicketChangesAsync(ticket, cancellationToken);
     }
 
-    public async Task DeleteAsync(Ticket ticket, CancellationToken cancellationToken)
+    public Task DeleteAsync(Ticket ticket, CancellationToken cancellationToken)
     {
         dbContext.Tickets.Remove(ticket);
-        await SaveTicketChangesAsync(ticket, cancellationToken);
+        return SaveTicketChangesAsync(ticket, cancellationToken);
     }
 
     private async Task SaveTicketChangesAsync(Ticket ticket, CancellationToken cancellationToken)
@@ -98,48 +110,30 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
         }
     }
 
-    private static IOrderedQueryable<Ticket> ApplyOrdering(
-        IQueryable<Ticket> tickets,
-        TicketListQuery query)
+    /// <summary>
+    /// Orders by the requested field, then by newest first, then by id so pagination is stable.
+    /// </summary>
+    private static IOrderedQueryable<Ticket> ApplyOrdering(IQueryable<Ticket> tickets, TicketListQuery query)
     {
-        return query.SortBy switch
+        var ordered = query.SortBy switch
         {
-            TicketSortField.CreatedAt when query.SortDescending =>
-                tickets.OrderByDescending(ticket => ticket.CreatedAt).ThenBy(ticket => ticket.Id),
-            TicketSortField.CreatedAt =>
-                tickets.OrderBy(ticket => ticket.CreatedAt).ThenBy(ticket => ticket.Id),
-            TicketSortField.Priority when query.SortDescending =>
-                tickets.OrderByDescending(ticket =>
-                        ticket.Priority == TicketPriority.High ? 3
-                        : ticket.Priority == TicketPriority.Medium ? 2
-                        : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            TicketSortField.Priority =>
-                tickets.OrderBy(ticket =>
-                        ticket.Priority == TicketPriority.High ? 3
-                        : ticket.Priority == TicketPriority.Medium ? 2
-                        : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            TicketSortField.Status when query.SortDescending =>
-                tickets.OrderByDescending(ticket =>
-                        ticket.Status == TicketStatus.Closed ? 4
-                        : ticket.Status == TicketStatus.Resolved ? 3
-                        : ticket.Status == TicketStatus.InProgress ? 2
-                        : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            TicketSortField.Status =>
-                tickets.OrderBy(ticket =>
-                        ticket.Status == TicketStatus.Closed ? 4
-                        : ticket.Status == TicketStatus.Resolved ? 3
-                        : ticket.Status == TicketStatus.InProgress ? 2
-                        : 1)
-                    .ThenByDescending(ticket => ticket.CreatedAt)
-                    .ThenBy(ticket => ticket.Id),
-            _ => throw new ArgumentOutOfRangeException(nameof(query.SortBy))
+            TicketSortField.CreatedAt => OrderBy(tickets, ticket => ticket.CreatedAt, query.SortDescending),
+            TicketSortField.Priority => OrderBy(tickets, PriorityRank, query.SortDescending)
+                .ThenByDescending(ticket => ticket.CreatedAt),
+            TicketSortField.Status => OrderBy(tickets, StatusRank, query.SortDescending)
+                .ThenByDescending(ticket => ticket.CreatedAt),
+            _ => throw new ArgumentOutOfRangeException(nameof(query), query.SortBy, "Unsupported sort field.")
         };
+
+        return ordered.ThenBy(ticket => ticket.Id);
+    }
+
+    private static IOrderedQueryable<Ticket> OrderBy<TKey>(
+        IQueryable<Ticket> tickets,
+        Expression<Func<Ticket, TKey>> key,
+        bool descending)
+    {
+        return descending ? tickets.OrderByDescending(key) : tickets.OrderBy(key);
     }
 
     private static string EscapeLikePattern(string value)

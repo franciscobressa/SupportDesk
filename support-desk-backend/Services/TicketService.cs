@@ -3,13 +3,20 @@ using SupportDesk.Api.Repositories;
 
 namespace SupportDesk.Api.Services;
 
+/// <summary>
+/// Application layer: loads tickets, applies use-case checks, delegates state changes to the
+/// <see cref="Ticket"/> aggregate and persists the result.
+/// </summary>
 public sealed class TicketService(ITicketRepository ticketRepository, TimeProvider timeProvider)
 {
-    private const string MockAuthor = "Support Manager (mock)";
-
     public Task<TicketPage> GetTicketsAsync(TicketListQuery query, CancellationToken cancellationToken)
     {
         return ticketRepository.GetPageAsync(query, cancellationToken);
+    }
+
+    public Task<TicketSummary> GetSummaryAsync(CancellationToken cancellationToken)
+    {
+        return ticketRepository.GetSummaryAsync(cancellationToken);
     }
 
     public Task<Ticket?> GetTicketAsync(Guid id, CancellationToken cancellationToken)
@@ -21,18 +28,14 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
         CreateTicketCommand command,
         CancellationToken cancellationToken)
     {
-        var now = timeProvider.GetUtcNow();
-        var ticket = new Ticket
-        {
-            Title = command.Title.Trim(),
-            Description = command.Description.Trim(),
-            CustomerName = NormalizeOptional(command.CustomerName),
-            CustomerEmail = NormalizeOptional(command.CustomerEmail),
-            Status = command.Status ?? TicketStatus.Open,
-            Priority = command.Priority ?? TicketPriority.Medium,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+        var ticket = Ticket.Create(
+            command.Title,
+            command.Description,
+            command.CustomerName,
+            command.CustomerEmail,
+            command.Status ?? TicketStatus.Open,
+            command.Priority ?? TicketPriority.Medium,
+            timeProvider.GetUtcNow());
 
         await ticketRepository.AddAsync(ticket, cancellationToken);
         return ticket;
@@ -56,44 +59,21 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
             throw new TicketConcurrencyException(ticket.Id);
         }
 
-        var title = command.Title.Trim();
-        var description = command.Description.Trim();
-        var customerName = NormalizeOptional(command.CustomerName);
-        var customerEmail = NormalizeOptional(command.CustomerEmail);
-        var statusChanged = ticket.Status != command.Status;
-        var hasChanges = statusChanged
-            || ticket.Priority != command.Priority
-            || ticket.Title != title
-            || ticket.Description != description
-            || ticket.CustomerName != customerName
-            || ticket.CustomerEmail != customerEmail;
-
-        if (!hasChanges)
-        {
-            return ticket;
-        }
-
         var now = timeProvider.GetUtcNow();
-        if (statusChanged)
+        var detailsChanged = ticket.UpdateDetails(
+            command.Title,
+            command.Description,
+            command.CustomerName,
+            command.CustomerEmail,
+            command.Priority,
+            now);
+        var statusChanged = ticket.ChangeStatus(command.Status, TicketConstraints.MockAuthor, now);
+
+        if (detailsChanged || statusChanged)
         {
-            ticket.StatusChanges.Add(new TicketStatusChange
-            {
-                PreviousStatus = ticket.Status,
-                NewStatus = command.Status,
-                Author = MockAuthor,
-                CreatedAt = now
-            });
+            await ticketRepository.UpdateAsync(ticket, cancellationToken);
         }
 
-        ticket.Title = title;
-        ticket.Description = description;
-        ticket.CustomerName = customerName;
-        ticket.CustomerEmail = customerEmail;
-        ticket.Status = command.Status;
-        ticket.Priority = command.Priority;
-        ticket.UpdatedAt = now;
-
-        await ticketRepository.UpdateAsync(ticket, cancellationToken);
         return ticket;
     }
 
@@ -108,17 +88,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
             return null;
         }
 
-        var now = timeProvider.GetUtcNow();
-        var comment = new TicketComment
-        {
-            TicketId = ticketId,
-            Text = text.Trim(),
-            Author = MockAuthor,
-            CreatedAt = now
-        };
-
-        ticket.Comments.Add(comment);
-        ticket.UpdatedAt = now;
+        var comment = ticket.AddComment(text, TicketConstraints.MockAuthor, timeProvider.GetUtcNow());
         await ticketRepository.UpdateAsync(ticket, cancellationToken);
         return comment;
     }
@@ -133,10 +103,5 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
 
         await ticketRepository.DeleteAsync(ticket, cancellationToken);
         return true;
-    }
-
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

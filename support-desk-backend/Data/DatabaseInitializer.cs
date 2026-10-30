@@ -253,34 +253,24 @@ public static class DatabaseInitializer
         DateTimeOffset createdAt,
         TicketStatus? previousStatus = null)
     {
-        var ticket = new Ticket
-        {
-            Title = title,
-            Description = description,
-            Status = status,
-            Priority = priority,
-            CustomerName = customerName,
-            CustomerEmail = customerEmail,
-            CreatedAt = createdAt,
-            UpdatedAt = previousStatus is null ? createdAt : createdAt.AddHours(2)
-        };
+        // Demo history goes through the same aggregate methods as real requests,
+        // so seeded tickets follow the same rules (history entries, UpdatedAt).
+        var ticket = Ticket.Create(
+            title,
+            description,
+            customerName,
+            customerEmail,
+            previousStatus ?? status,
+            priority,
+            createdAt);
 
         if (previousStatus is not null)
         {
-            ticket.StatusChanges.Add(new TicketStatusChange
-            {
-                PreviousStatus = previousStatus.Value,
-                NewStatus = status,
-                Author = "Support Manager (mock)",
-                CreatedAt = createdAt.AddHours(2)
-            });
-
-            ticket.Comments.Add(new TicketComment
-            {
-                Text = "We are reviewing this request and will follow up shortly.",
-                Author = "Support Manager (mock)",
-                CreatedAt = createdAt.AddHours(1)
-            });
+            ticket.AddComment(
+                "We are reviewing this request and will follow up shortly.",
+                TicketConstraints.MockAuthor,
+                createdAt.AddHours(1));
+            ticket.ChangeStatus(status, TicketConstraints.MockAuthor, createdAt.AddHours(2));
         }
 
         return ticket;

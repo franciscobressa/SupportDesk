@@ -96,14 +96,53 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
         // Both requests load the same version, as two managers opening the ticket at once would.
         var firstCopy = (await firstRepository.GetByIdAsync(ticketId, CancellationToken.None))!;
         var secondCopy = (await secondRepository.GetByIdAsync(ticketId, CancellationToken.None))!;
-        firstCopy.Title = "First save";
-        firstCopy.UpdatedAt = firstCopy.UpdatedAt.AddMinutes(1);
+        Rename(firstCopy, "First save", minutesLater: 1);
         await firstRepository.UpdateAsync(firstCopy, CancellationToken.None);
-        secondCopy.Title = "Second save";
-        secondCopy.UpdatedAt = secondCopy.UpdatedAt.AddMinutes(2);
+        Rename(secondCopy, "Second save", minutesLater: 2);
 
         await Assert.ThrowsAsync<TicketConcurrencyException>(
             () => secondRepository.UpdateAsync(secondCopy, CancellationToken.None));
+
+        static void Rename(Ticket ticket, string title, int minutesLater) => ticket.UpdateDetails(
+            title,
+            ticket.Description,
+            ticket.CustomerName,
+            ticket.CustomerEmail,
+            ticket.Priority,
+            ticket.UpdatedAt.AddMinutes(minutesLater));
+    }
+
+    [Fact]
+    public async Task CommentAndStatusChange_ArePersistedWithTheTicket()
+    {
+        // Child entities get their ids from the domain; this proves EF inserts them rather than updating.
+        await using var isolatedFactory = new TicketApiFactory();
+        var client = isolatedFactory.CreateClient();
+        var ticket = (await client.GetFromJsonAsync<JsonElement>("/api/tickets?status=Open")).GetProperty("items")[0];
+        var ticketId = ticket.GetProperty("id").GetGuid();
+
+        var commentResponse = await client.PostAsJsonAsync($"/api/tickets/{ticketId}/comments", new { text = "  Checking logs.  " });
+        var afterComment = await client.GetFromJsonAsync<JsonElement>($"/api/tickets/{ticketId}");
+        var updateResponse = await client.PutAsJsonAsync($"/api/tickets/{ticketId}", new
+        {
+            title = afterComment.GetProperty("title").GetString(),
+            description = afterComment.GetProperty("description").GetString(),
+            customerName = afterComment.GetProperty("customerName").GetString(),
+            status = "InProgress",
+            priority = afterComment.GetProperty("priority").GetString(),
+            expectedUpdatedAt = afterComment.GetProperty("updatedAt").GetString()
+        });
+        var details = await client.GetFromJsonAsync<JsonElement>($"/api/tickets/{ticketId}");
+
+        Assert.Equal(HttpStatusCode.Created, commentResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        Assert.Contains(
+            details.GetProperty("comments").EnumerateArray(),
+            comment => comment.GetProperty("text").GetString() == "Checking logs.");
+        var change = Assert.Single(details.GetProperty("statusChanges").EnumerateArray());
+        Assert.Equal("Open", change.GetProperty("previousStatus").GetString());
+        Assert.Equal("InProgress", change.GetProperty("newStatus").GetString());
+        Assert.Equal("InProgress", details.GetProperty("status").GetString());
     }
 
     [Fact]

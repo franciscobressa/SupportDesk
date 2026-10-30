@@ -2,6 +2,9 @@ using SupportDesk.Api.Domain;
 
 namespace SupportDesk.Api.Contracts;
 
+// Each response maps itself from the domain through a From... factory, so the mapping for a
+// given shape lives in exactly one place.
+
 public sealed record TicketListItemResponse(
     Guid Id,
     string Title,
@@ -11,13 +14,38 @@ public sealed record TicketListItemResponse(
     string? CustomerName,
     string? CustomerEmail,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt)
+{
+    public static TicketListItemResponse FromTicket(Ticket ticket)
+    {
+        return new TicketListItemResponse(
+            ticket.Id,
+            ticket.Title,
+            ticket.Description,
+            ticket.Status,
+            ticket.Priority,
+            ticket.CustomerName,
+            ticket.CustomerEmail,
+            ticket.CreatedAt,
+            ticket.UpdatedAt);
+    }
+}
 
 public sealed record TicketSummaryResponse(
     int Open,
     int InProgress,
     int Resolved,
-    int HighPriority);
+    int HighPriority)
+{
+    public static TicketSummaryResponse FromSummary(TicketSummary summary)
+    {
+        return new TicketSummaryResponse(
+            summary.Open,
+            summary.InProgress,
+            summary.Resolved,
+            summary.HighPriority);
+    }
+}
 
 public sealed record TicketListResponse(
     IReadOnlyList<TicketListItemResponse> Items,
@@ -31,14 +59,31 @@ public sealed record TicketCommentResponse(
     Guid Id,
     string Text,
     string Author,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt)
+{
+    public static TicketCommentResponse FromComment(TicketComment comment)
+    {
+        return new TicketCommentResponse(comment.Id, comment.Text, comment.Author, comment.CreatedAt);
+    }
+}
 
 public sealed record TicketStatusChangeResponse(
     Guid Id,
     TicketStatus PreviousStatus,
     TicketStatus NewStatus,
     string Author,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt)
+{
+    public static TicketStatusChangeResponse FromStatusChange(TicketStatusChange change)
+    {
+        return new TicketStatusChangeResponse(
+            change.Id,
+            change.PreviousStatus,
+            change.NewStatus,
+            change.Author,
+            change.CreatedAt);
+    }
+}
 
 public sealed record TicketDetailsResponse(
     Guid Id,
@@ -67,20 +112,11 @@ public sealed record TicketDetailsResponse(
             ticket.UpdatedAt,
             ticket.Comments
                 .OrderBy(comment => comment.CreatedAt)
-                .Select(comment => new TicketCommentResponse(
-                    comment.Id,
-                    comment.Text,
-                    comment.Author,
-                    comment.CreatedAt))
+                .Select(TicketCommentResponse.FromComment)
                 .ToArray(),
             ticket.StatusChanges
                 .OrderBy(change => change.CreatedAt)
-                .Select(change => new TicketStatusChangeResponse(
-                    change.Id,
-                    change.PreviousStatus,
-                    change.NewStatus,
-                    change.Author,
-                    change.CreatedAt))
+                .Select(TicketStatusChangeResponse.FromStatusChange)
                 .ToArray());
     }
 }

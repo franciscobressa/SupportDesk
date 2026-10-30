@@ -6,18 +6,18 @@ namespace SupportDesk.Api.Contracts;
 public abstract class TicketWriteRequest : IValidatableObject
 {
     [Required]
-    [StringLength(120)]
+    [StringLength(TicketConstraints.TitleMaxLength)]
     public string Title { get; set; } = string.Empty;
 
     [Required]
-    [StringLength(5000)]
+    [StringLength(TicketConstraints.DescriptionMaxLength)]
     public string Description { get; set; } = string.Empty;
 
-    [StringLength(120)]
+    [StringLength(TicketConstraints.CustomerNameMaxLength)]
     public string? CustomerName { get; set; }
 
     [EmailAddress]
-    [StringLength(254)]
+    [StringLength(TicketConstraints.CustomerEmailMaxLength)]
     public string? CustomerEmail { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -58,6 +58,6 @@ public sealed class UpdateTicketRequest : TicketWriteRequest
 public sealed class CreateCommentRequest
 {
     [Required]
-    [StringLength(2000)]
+    [StringLength(TicketConstraints.CommentMaxLength)]
     public string Text { get; set; } = string.Empty;
 }

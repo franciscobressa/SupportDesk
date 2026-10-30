@@ -12,12 +12,7 @@ public sealed class TicketServiceTests
     [Fact]
     public async Task GetTicketsAsync_ForwardsQueryToRepository()
     {
-        var ticket = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Requested page",
-            TicketStatus.Open,
-            TicketPriority.High,
-            FixedNow);
+        var ticket = CreateTicket("Requested page", TicketStatus.Open, TicketPriority.High, FixedNow);
         var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
         var query = new TicketListQuery(
@@ -29,9 +24,7 @@ public sealed class TicketServiceTests
             Page: 2,
             PageSize: 10);
 
-        var result = await service.GetTicketsAsync(
-            query,
-            CancellationToken.None);
+        var result = await service.GetTicketsAsync(query, CancellationToken.None);
 
         Assert.Equal(query, repository.LastListQuery);
         Assert.Equal([ticket], result.Tickets);
@@ -69,27 +62,13 @@ public sealed class TicketServiceTests
     [Fact]
     public async Task UpdateTicketAsync_DoesNotSaveOrChangeTimestampWhenNothingChanged()
     {
-        var ticket = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Existing title",
-            TicketStatus.Open,
-            TicketPriority.Medium,
-            FixedNow.AddDays(-1));
-        ticket.Description = "Existing description";
-        ticket.CustomerName = "Avery Morgan";
+        var ticket = CreateTicket("Existing title", TicketStatus.Open, TicketPriority.Medium, FixedNow.AddDays(-1));
         var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
 
         var result = await service.UpdateTicketAsync(
             ticket.Id,
-            new UpdateTicketCommand(
-                ticket.Title,
-                ticket.Description,
-                ticket.CustomerName,
-                ticket.CustomerEmail,
-                ticket.Status,
-                ticket.Priority,
-                ticket.UpdatedAt),
+            UpdateCommandFor(ticket),
             CancellationToken.None);
 
         Assert.Same(ticket, result);
@@ -101,26 +80,13 @@ public sealed class TicketServiceTests
     [Fact]
     public async Task UpdateTicketAsync_RecordsStatusChangeWithPreviousAndNewValues()
     {
-        var ticket = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Existing title",
-            TicketStatus.Open,
-            TicketPriority.Medium,
-            FixedNow.AddDays(-1));
-        ticket.Description = "Existing description";
+        var ticket = CreateTicket("Existing title", TicketStatus.Open, TicketPriority.Medium, FixedNow.AddDays(-1));
         var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
 
         var result = await service.UpdateTicketAsync(
             ticket.Id,
-            new UpdateTicketCommand(
-                ticket.Title,
-                ticket.Description,
-                ticket.CustomerName,
-                ticket.CustomerEmail,
-                TicketStatus.InProgress,
-                ticket.Priority,
-                ticket.UpdatedAt),
+            UpdateCommandFor(ticket) with { Status = TicketStatus.InProgress },
             CancellationToken.None);
 
         var change = Assert.Single(Assert.IsType<Ticket>(result).StatusChanges);
@@ -129,6 +95,25 @@ public sealed class TicketServiceTests
         Assert.Equal("Support Manager (mock)", change.Author);
         Assert.Equal(FixedNow, change.CreatedAt);
         Assert.Equal(FixedNow, result.UpdatedAt);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public async Task UpdateTicketAsync_SavesDetailChangesWithoutRecordingStatusHistory()
+    {
+        var ticket = CreateTicket("Existing title", TicketStatus.Open, TicketPriority.Medium, FixedNow.AddDays(-1));
+        var repository = new FakeTicketRepository(ticket);
+        var service = CreateService(repository);
+
+        await service.UpdateTicketAsync(
+            ticket.Id,
+            UpdateCommandFor(ticket) with { Title = "  Renamed  ", Priority = TicketPriority.High },
+            CancellationToken.None);
+
+        Assert.Equal("Renamed", ticket.Title);
+        Assert.Equal(TicketPriority.High, ticket.Priority);
+        Assert.Equal(FixedNow, ticket.UpdatedAt);
+        Assert.Empty(ticket.StatusChanges);
         Assert.Equal(1, repository.UpdateCount);
     }
 
@@ -155,25 +140,18 @@ public sealed class TicketServiceTests
     [Fact]
     public async Task UpdateTicketAsync_ThrowsConflictAndKeepsTicketWhenLoadedVersionIsStale()
     {
-        var ticket = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Existing title",
-            TicketStatus.Open,
-            TicketPriority.Medium,
-            FixedNow.AddDays(-1));
+        var ticket = CreateTicket("Existing title", TicketStatus.Open, TicketPriority.Medium, FixedNow.AddDays(-1));
         var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
 
         await Assert.ThrowsAsync<TicketConcurrencyException>(() => service.UpdateTicketAsync(
             ticket.Id,
-            new UpdateTicketCommand(
-                "Overwritten title",
-                ticket.Description,
-                "Customer",
-                null,
-                TicketStatus.Closed,
-                ticket.Priority,
-                ExpectedUpdatedAt: FixedNow.AddDays(-2)),
+            UpdateCommandFor(ticket) with
+            {
+                Title = "Overwritten title",
+                Status = TicketStatus.Closed,
+                ExpectedUpdatedAt = FixedNow.AddDays(-2)
+            },
             CancellationToken.None));
 
         Assert.Equal("Existing title", ticket.Title);
@@ -185,12 +163,7 @@ public sealed class TicketServiceTests
     [Fact]
     public async Task AddCommentAsync_UsesServerAuthorAndTimeAndUpdatesTicket()
     {
-        var ticket = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Existing title",
-            TicketStatus.Open,
-            TicketPriority.Medium,
-            FixedNow.AddDays(-1));
+        var ticket = CreateTicket("Existing title", TicketStatus.Open, TicketPriority.Medium, FixedNow.AddDays(-1));
         var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
 
@@ -208,12 +181,7 @@ public sealed class TicketServiceTests
     [Fact]
     public async Task DeleteTicketAsync_RemovesExistingTicketAndReturnsFalseForMissingTicket()
     {
-        var ticket = CreateTicket(
-            "00000000-0000-0000-0000-000000000001",
-            "Existing title",
-            TicketStatus.Open,
-            TicketPriority.Medium,
-            FixedNow);
+        var ticket = CreateTicket("Existing title", TicketStatus.Open, TicketPriority.Medium, FixedNow);
         var repository = new FakeTicketRepository(ticket);
         var service = CreateService(repository);
 
@@ -228,22 +196,25 @@ public sealed class TicketServiceTests
     }
 
     private static Ticket CreateTicket(
-        string id,
         string title,
         TicketStatus status,
         TicketPriority priority,
         DateTimeOffset createdAt)
     {
-        return new Ticket
-        {
-            Id = Guid.Parse(id),
-            Title = title,
-            Description = title,
-            Status = status,
-            Priority = priority,
-            CreatedAt = createdAt,
-            UpdatedAt = createdAt
-        };
+        return Ticket.Create(title, $"{title} description", "Avery Morgan", null, status, priority, createdAt);
+    }
+
+    // A command that repeats the ticket's current values; tests change only what they exercise.
+    private static UpdateTicketCommand UpdateCommandFor(Ticket ticket)
+    {
+        return new UpdateTicketCommand(
+            ticket.Title,
+            ticket.Description,
+            ticket.CustomerName,
+            ticket.CustomerEmail,
+            ticket.Status,
+            ticket.Priority,
+            ticket.UpdatedAt);
     }
 
     private sealed class FakeTicketRepository(params Ticket[] tickets) : ITicketRepository
@@ -257,12 +228,16 @@ public sealed class TicketServiceTests
         public Task<TicketPage> GetPageAsync(TicketListQuery query, CancellationToken cancellationToken)
         {
             LastListQuery = query;
-            var summary = new TicketSummary(
+            return Task.FromResult(new TicketPage(Tickets, Tickets.Count));
+        }
+
+        public Task<TicketSummary> GetSummaryAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new TicketSummary(
                 Tickets.Count(ticket => ticket.Status == TicketStatus.Open),
                 Tickets.Count(ticket => ticket.Status == TicketStatus.InProgress),
                 Tickets.Count(ticket => ticket.Status == TicketStatus.Resolved),
-                Tickets.Count(ticket => ticket.Priority == TicketPriority.High));
-            return Task.FromResult(new TicketPage(Tickets, Tickets.Count, summary));
+                Tickets.Count(ticket => ticket.Priority == TicketPriority.High)));
         }
 
         public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -272,11 +247,6 @@ public sealed class TicketServiceTests
 
         public Task AddAsync(Ticket ticket, CancellationToken cancellationToken)
         {
-            if (ticket.Id == Guid.Empty)
-            {
-                ticket.Id = Guid.NewGuid();
-            }
-
             Tickets.Add(ticket);
             return Task.CompletedTask;
         }

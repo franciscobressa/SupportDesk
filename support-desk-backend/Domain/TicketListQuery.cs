@@ -24,5 +24,4 @@ public sealed record TicketSummary(
 
 public sealed record TicketPage(
     IReadOnlyList<Ticket> Tickets,
-    int TotalCount,
-    TicketSummary Summary);
+    int TotalCount);

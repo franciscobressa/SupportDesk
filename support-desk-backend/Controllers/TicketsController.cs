@@ -16,32 +16,17 @@ public sealed class TicketsController(TicketService ticketService) : ControllerB
         CancellationToken cancellationToken)
     {
         // [ApiController] has already returned 400 if the parameters failed validation.
-        var result = await ticketService.GetTicketsAsync(parameters.ToListQuery(), cancellationToken);
-        var items = result.Tickets.Select(ticket => new TicketListItemResponse(
-                ticket.Id,
-                ticket.Title,
-                ticket.Description,
-                ticket.Status,
-                ticket.Priority,
-                ticket.CustomerName,
-                ticket.CustomerEmail,
-                ticket.CreatedAt,
-                ticket.UpdatedAt))
-            .ToArray();
-        var totalPages = (int)Math.Ceiling(result.TotalCount / (double)parameters.PageSize);
-        var summary = new TicketSummaryResponse(
-            result.Summary.Open,
-            result.Summary.InProgress,
-            result.Summary.Resolved,
-            result.Summary.HighPriority);
+        var page = await ticketService.GetTicketsAsync(parameters.ToListQuery(), cancellationToken);
+        var summary = await ticketService.GetSummaryAsync(cancellationToken);
+        var totalPages = (int)Math.Ceiling(page.TotalCount / (double)parameters.PageSize);
 
         return Ok(new TicketListResponse(
-            items,
+            page.Tickets.Select(TicketListItemResponse.FromTicket).ToArray(),
             parameters.Page,
             parameters.PageSize,
-            result.TotalCount,
+            page.TotalCount,
             totalPages,
-            summary));
+            TicketSummaryResponse.FromSummary(summary)));
     }
 
     [HttpGet("{id:guid}")]
@@ -126,17 +111,8 @@ public sealed class TicketsController(TicketService ticketService) : ControllerB
         CancellationToken cancellationToken)
     {
         var comment = await ticketService.AddCommentAsync(id, request.Text, cancellationToken);
-        if (comment is null)
-        {
-            return NotFound();
-        }
-
-        var response = new TicketCommentResponse(
-            comment.Id,
-            comment.Text,
-            comment.Author,
-            comment.CreatedAt);
-
-        return CreatedAtAction(nameof(GetById), new { id }, response);
+        return comment is null
+            ? NotFound()
+            : CreatedAtAction(nameof(GetById), new { id }, TicketCommentResponse.FromComment(comment));
     }
 }

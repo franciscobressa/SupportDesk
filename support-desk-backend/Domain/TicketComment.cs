@@ -1,16 +1,34 @@
 namespace SupportDesk.Api.Domain;
 
+/// <summary>A comment on a ticket; created only through <see cref="Ticket.AddComment"/>.</summary>
 public sealed class TicketComment
 {
-    public Guid Id { get; set; }
+    // Used by EF Core when materializing rows.
+    private TicketComment()
+    {
+    }
 
-    public Guid TicketId { get; set; }
+    public Guid Id { get; private set; }
 
-    public string Text { get; set; } = string.Empty;
+    public Guid TicketId { get; private set; }
 
-    public string Author { get; set; } = string.Empty;
+    public string Text { get; private set; } = string.Empty;
 
-    public DateTimeOffset CreatedAt { get; set; }
+    public string Author { get; private set; } = string.Empty;
 
-    public Ticket Ticket { get; set; } = null!;
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    public Ticket Ticket { get; private set; } = null!;
+
+    internal static TicketComment Create(Guid ticketId, string text, string author, DateTimeOffset createdAt)
+    {
+        return new TicketComment
+        {
+            Id = Guid.CreateVersion7(createdAt),
+            TicketId = ticketId,
+            Text = text,
+            Author = author,
+            CreatedAt = createdAt
+        };
+    }
 }

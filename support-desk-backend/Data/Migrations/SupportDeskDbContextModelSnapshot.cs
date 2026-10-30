@@ -20,7 +20,6 @@ namespace SupportDesk.Api.Data.Migrations
             modelBuilder.Entity("SupportDesk.Api.Domain.Ticket", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("CreatedAt")
@@ -68,7 +67,6 @@ namespace SupportDesk.Api.Data.Migrations
             modelBuilder.Entity("SupportDesk.Api.Domain.TicketComment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Author")
@@ -97,7 +95,6 @@ namespace SupportDesk.Api.Data.Migrations
             modelBuilder.Entity("SupportDesk.Api.Domain.TicketStatusChange", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Author")

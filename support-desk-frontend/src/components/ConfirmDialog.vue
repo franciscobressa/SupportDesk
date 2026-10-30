@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './icons/AppIcon.vue'
 import BaseDialog from './BaseDialog.vue'
 
 const props = withDefaults(defineProps<{
@@ -38,10 +39,8 @@ function requestClose(): void {
     @close="requestClose"
   >
     <template #icon>
-      <span class="grid size-11 place-items-center rounded-full bg-rose-50 text-rose-600">
-        <svg viewBox="0 0 24 24" fill="none" class="size-5" aria-hidden="true">
-          <path d="M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+      <span class="grid size-11 place-items-center rounded-full bg-danger-soft text-danger-fg">
+        <AppIcon name="trash" class="size-5" />
       </span>
     </template>
     <template #actions>

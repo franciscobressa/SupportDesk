@@ -23,6 +23,7 @@ export class ApiError extends Error {
   }
 }
 
+// '/api' goes through the Vite dev proxy; an absolute URL targets a separately hosted API (needs CORS).
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || '/api'
 const apiBaseUrl = configuredApiBaseUrl.replace(/\/+$/, '')
 
@@ -36,6 +37,8 @@ async function request(path: string, options: RequestInit = {}): Promise<Respons
   })
 
   if (!response.ok) {
+    // Prefer the API's ProblemDetails (first validation message, then detail/title); bodies that are
+    // not JSON keep the generic status message.
     let message = `Request failed with status ${response.status}.`
 
     try {

@@ -16,7 +16,9 @@ import {
   getTickets,
   updateTicket,
 } from '../services/ticketsApi'
+import { getErrorMessage } from '../utils/errors'
 
+// Keeps the list skeleton up long enough to avoid a flicker on fast responses (spec 13).
 const minimumListLoadingDurationMs = 400
 
 export const useTicketsStore = defineStore('tickets', {
@@ -48,6 +50,7 @@ export const useTicketsStore = defineStore('tickets', {
 
   actions: {
     async fetchTickets(filters: TicketListFilters = {}) {
+      // Only the latest request may update the list: a slower response to an older filter is ignored.
       const requestId = ++this.listRequestId
       const loadingStartedAt = Date.now()
       this.listLoading = true
@@ -190,12 +193,10 @@ export const useTicketsStore = defineStore('tickets', {
     replaceTicket(updated: TicketDetails) {
       const index = this.tickets.findIndex((ticket) => ticket.id === updated.id)
       if (index >= 0) {
-        this.tickets.splice(index, 1, updated)
+        // The list holds summaries only; keep comments and history out of it.
+        const { comments: _comments, statusChanges: _statusChanges, ...summary } = updated
+        this.tickets.splice(index, 1, summary)
       }
     },
   },
 })
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'An unexpected error occurred.'
-}

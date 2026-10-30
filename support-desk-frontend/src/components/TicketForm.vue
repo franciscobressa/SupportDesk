@@ -143,11 +143,11 @@ function submitForm(): void {
         />
       </div>
     </div>
-    <p v-if="customerError" class="-mt-3 text-sm text-rose-600" role="alert">
+    <p v-if="customerError" class="-mt-3 text-sm text-danger-fg" role="alert">
       {{ customerError }}
     </p>
 
-    <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+    <div class="flex flex-col-reverse gap-3 border-t border-line-subtle pt-5 sm:flex-row sm:justify-end">
       <button
         v-if="showCancel"
         type="button"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './icons/AppIcon.vue'
 import { computed } from 'vue'
 import type { TicketListFilters } from '../types/tickets'
 
@@ -44,10 +45,7 @@ function toggleSortDirection(): void {
   <div class="grid gap-3 md:grid-cols-[minmax(220px,1fr)_160px_160px_auto]">
     <label class="relative block">
       <span class="sr-only">Search tickets</span>
-      <svg viewBox="0 0 24 24" fill="none" class="pointer-events-none absolute left-3 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden="true">
-        <circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.8" />
-        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-      </svg>
+      <AppIcon name="search" class="pointer-events-none absolute left-3 top-1/2 size-4.5 -translate-y-1/2 text-fg-faint" />
       <input v-model="search" class="form-input form-input-search" placeholder="Search tickets..." />
     </label>
 
@@ -88,10 +86,7 @@ function toggleSortDirection(): void {
         :title="sortDirection === 'desc' ? 'Sort descending' : 'Sort ascending'"
         @click="toggleSortDirection"
       >
-        <svg viewBox="0 0 24 24" fill="none" class="size-[18px]" aria-hidden="true">
-          <path v-if="sortDirection === 'desc'" d="M12 5v14m0 0-6-6m6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          <path v-else d="M12 19V5m0 0 6 6m-6-6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <AppIcon :name="sortDirection === 'desc' ? 'sort-desc' : 'sort-asc'" class="size-4.5" />
       </button>
     </div>
   </div>

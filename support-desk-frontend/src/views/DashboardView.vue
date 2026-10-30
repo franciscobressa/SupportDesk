@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
             </div>
             <button
               type="button"
-              class="button-secondary self-start sm:self-auto"
+              class="button-secondary w-full sm:w-auto sm:self-auto"
               :disabled="ticketsStore.listLoading"
               @click="fetchTickets"
             >

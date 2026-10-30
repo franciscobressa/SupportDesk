@@ -1,6 +1,6 @@
 using SupportDesk.Api.Domain;
 
-namespace SupportDesk.Api.Tests;
+namespace SupportDesk.Api.Tests.Domain;
 
 // The aggregate's rules are plain C#, so they are tested without repositories or a clock.
 public sealed class TicketTests

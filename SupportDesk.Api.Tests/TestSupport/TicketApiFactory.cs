@@ -6,8 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SupportDesk.Api.Data;
 
-namespace SupportDesk.Api.Tests;
+namespace SupportDesk.Api.Tests.TestSupport;
 
+/// <summary>
+/// Hosts the real API pipeline against a private in-memory SQLite database. The connection stays
+/// open for the factory's lifetime because an in-memory SQLite database disappears when it closes.
+/// Each factory instance is an independent database, migrated and seeded on startup.
+/// </summary>
 public sealed class TicketApiFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("Data Source=:memory:");

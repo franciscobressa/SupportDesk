@@ -1,7 +1,7 @@
 using SupportDesk.Api.Domain;
 using SupportDesk.Api.Services;
 
-namespace SupportDesk.Api.Tests;
+namespace SupportDesk.Api.Tests.Application;
 
 public sealed class TicketServiceTests
 {

@@ -1,7 +1,7 @@
 using NetArchTest.Rules;
 using SupportDesk.Api.Domain;
 
-namespace SupportDesk.Api.Tests;
+namespace SupportDesk.Api.Tests.Architecture;
 
 // The layers live in one project, so the compiler cannot stop a reference in the wrong direction.
 // These tests inspect the compiled IL (method bodies included) and fail when a layer depends on

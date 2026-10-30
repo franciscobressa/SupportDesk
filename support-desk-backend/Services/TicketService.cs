@@ -7,9 +7,7 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
 {
     private const string MockAuthor = "Support Manager (mock)";
 
-    public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetTicketsAsync(
-        TicketListQuery query,
-        CancellationToken cancellationToken)
+    public Task<TicketPage> GetTicketsAsync(TicketListQuery query, CancellationToken cancellationToken)
     {
         return ticketRepository.GetPageAsync(query, cancellationToken);
     }
@@ -49,6 +47,13 @@ public sealed class TicketService(ITicketRepository ticketRepository, TimeProvid
         if (ticket is null)
         {
             return null;
+        }
+
+        // The client edited a stale copy: reject instead of overwriting the newer version.
+        // The repository's concurrency token also covers a write that lands between this check and the save.
+        if (ticket.UpdatedAt != command.ExpectedUpdatedAt)
+        {
+            throw new TicketConcurrencyException(ticket.Id);
         }
 
         var title = command.Title.Trim();

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseDialog from './BaseDialog.vue'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   open: boolean
   title: string
   description: string
@@ -18,6 +18,13 @@ const emit = defineEmits<{
   cancel: []
   confirm: []
 }>()
+
+// Escape and backdrop clicks are ignored while deleting, so the dialog cannot vanish mid-request.
+function requestClose(): void {
+  if (!props.loading) {
+    emit('cancel')
+  }
+}
 </script>
 
 <template>
@@ -28,7 +35,7 @@ const emit = defineEmits<{
     :error="error"
     role="alertdialog"
     compact
-    @close="emit('cancel')"
+    @close="requestClose"
   >
     <template #icon>
       <span class="grid size-11 place-items-center rounded-full bg-rose-50 text-rose-600">

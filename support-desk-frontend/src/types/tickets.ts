@@ -78,4 +78,7 @@ export interface TicketWriteRequest {
 
 export type CreateTicketRequest = TicketWriteRequest
 
-export type UpdateTicketRequest = TicketWriteRequest
+export interface UpdateTicketRequest extends TicketWriteRequest {
+  // The updatedAt value the form was loaded from, sent back unchanged so the API can detect edits made meanwhile.
+  expectedUpdatedAt: string
+}

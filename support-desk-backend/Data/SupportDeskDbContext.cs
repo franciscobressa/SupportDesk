@@ -29,6 +29,9 @@ public sealed class SupportDeskDbContext(DbContextOptions<SupportDeskDbContext> 
             entity.Property(ticket => ticket.Priority).HasConversion<string>().HasMaxLength(16);
             entity.Property(ticket => ticket.CustomerName).HasMaxLength(120);
             entity.Property(ticket => ticket.CustomerEmail).HasMaxLength(254);
+            // Every write sets UpdatedAt, so it doubles as an optimistic concurrency token:
+            // EF adds "WHERE UpdatedAt = <loaded value>" to UPDATE/DELETE statements.
+            entity.Property(ticket => ticket.UpdatedAt).IsConcurrencyToken();
             entity.HasIndex(ticket => ticket.CreatedAt);
             entity.HasMany(ticket => ticket.Comments)
                 .WithOne(comment => comment.Ticket)

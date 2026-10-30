@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
 using SupportDesk.Api.Data;
+using SupportDesk.Api.ErrorHandling;
 using SupportDesk.Api.Repositories;
 using SupportDesk.Api.Services;
 
@@ -21,6 +22,7 @@ builder.Services
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<TicketConcurrencyExceptionHandler>();
 var connectionString = builder.Configuration.GetConnectionString("SupportDesk")
     ?? throw new InvalidOperationException("The SupportDesk connection string is not configured.");
 var sqliteConnection = new SqliteConnectionStringBuilder(connectionString);

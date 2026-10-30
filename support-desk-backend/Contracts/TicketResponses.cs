@@ -13,13 +13,19 @@ public sealed record TicketListItemResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
+public sealed record TicketSummaryResponse(
+    int Open,
+    int InProgress,
+    int Resolved,
+    int HighPriority);
+
 public sealed record TicketListResponse(
     IReadOnlyList<TicketListItemResponse> Items,
     int Page,
     int PageSize,
     int TotalCount,
     int TotalPages,
-    TicketSummary Summary);
+    TicketSummaryResponse Summary);
 
 public sealed record TicketCommentResponse(
     Guid Id,

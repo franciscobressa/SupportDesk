@@ -13,6 +13,16 @@ interface ApiProblem {
   errors?: Record<string, string[]>
 }
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || '/api'
 const apiBaseUrl = configuredApiBaseUrl.replace(/\/+$/, '')
 
@@ -38,7 +48,7 @@ async function request(path: string, options: RequestInit = {}): Promise<Respons
       }
     }
 
-    throw new Error(message)
+    throw new ApiError(message, response.status)
   }
 
   return response

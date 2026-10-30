@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge.vue'
 import TicketCommentsPanel from '../components/TicketCommentsPanel.vue'
 import TicketForm from '../components/TicketForm.vue'
 import TicketStatusHistoryPanel from '../components/TicketStatusHistoryPanel.vue'
+import { ApiError } from '../services/ticketsApi'
 import { useTicketsStore } from '../stores/tickets'
 import type { TicketWriteRequest } from '../types/tickets'
 import { formatDate, getInitials } from '../utils/formatters'
@@ -17,6 +18,7 @@ const ticketsStore = useTicketsStore()
 const commentText = ref('')
 const commentError = ref('')
 const actionError = ref('')
+const hasConflict = ref(false)
 const isEditing = ref(false)
 const isDeleteOpen = ref(false)
 const ticketId = computed(() => {
@@ -36,6 +38,7 @@ const dashboardLocation =
 async function loadTicket(id: string): Promise<void> {
   isEditing.value = false
   actionError.value = ''
+  hasConflict.value = false
 
   try {
     await ticketsStore.fetchTicket(id)
@@ -53,13 +56,23 @@ async function loadTicket(id: string): Promise<void> {
 }
 
 async function saveTicket(updatedTicket: TicketWriteRequest): Promise<void> {
+  if (!ticket.value) {
+    return
+  }
+
   actionError.value = ''
+  hasConflict.value = false
 
   try {
-    await ticketsStore.saveTicket(ticketId.value, updatedTicket)
+    await ticketsStore.saveTicket(ticketId.value, {
+      ...updatedTicket,
+      expectedUpdatedAt: ticket.value.updatedAt,
+    })
     isEditing.value = false
   } catch (error: unknown) {
     actionError.value = getErrorMessage(error)
+    // Keep the form open so the manager can copy their edits before loading the newer version.
+    hasConflict.value = error instanceof ApiError && error.status === 409
   }
 }
 
@@ -168,7 +181,12 @@ function getErrorMessage(error: unknown): string {
           </div>
         </section>
 
-        <p v-if="actionError" class="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">{{ actionError }}</p>
+        <div v-if="actionError" class="mt-5 flex flex-col gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between" role="alert">
+          <p>{{ actionError }}</p>
+          <button v-if="hasConflict" type="button" class="shrink-0 self-start font-semibold underline underline-offset-2 sm:self-auto" @click="loadTicket(ticketId)">
+            Load latest version
+          </button>
+        </div>
 
         <div class="mt-5 grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.8fr)]">
           <div class="space-y-5">

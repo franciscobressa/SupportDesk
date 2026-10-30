@@ -88,7 +88,8 @@ public sealed class TicketServiceTests
                 ticket.CustomerName,
                 ticket.CustomerEmail,
                 ticket.Status,
-                ticket.Priority),
+                ticket.Priority,
+                ticket.UpdatedAt),
             CancellationToken.None);
 
         Assert.Same(ticket, result);
@@ -118,7 +119,8 @@ public sealed class TicketServiceTests
                 ticket.CustomerName,
                 ticket.CustomerEmail,
                 TicketStatus.InProgress,
-                ticket.Priority),
+                ticket.Priority,
+                ticket.UpdatedAt),
             CancellationToken.None);
 
         var change = Assert.Single(Assert.IsType<Ticket>(result).StatusChanges);
@@ -143,10 +145,41 @@ public sealed class TicketServiceTests
                 "Customer",
                 null,
                 TicketStatus.Open,
-                TicketPriority.Low),
+                TicketPriority.Low,
+                FixedNow),
             CancellationToken.None);
 
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateTicketAsync_ThrowsConflictAndKeepsTicketWhenLoadedVersionIsStale()
+    {
+        var ticket = CreateTicket(
+            "00000000-0000-0000-0000-000000000001",
+            "Existing title",
+            TicketStatus.Open,
+            TicketPriority.Medium,
+            FixedNow.AddDays(-1));
+        var repository = new FakeTicketRepository(ticket);
+        var service = CreateService(repository);
+
+        await Assert.ThrowsAsync<TicketConcurrencyException>(() => service.UpdateTicketAsync(
+            ticket.Id,
+            new UpdateTicketCommand(
+                "Overwritten title",
+                ticket.Description,
+                "Customer",
+                null,
+                TicketStatus.Closed,
+                ticket.Priority,
+                ExpectedUpdatedAt: FixedNow.AddDays(-2)),
+            CancellationToken.None));
+
+        Assert.Equal("Existing title", ticket.Title);
+        Assert.Equal(TicketStatus.Open, ticket.Status);
+        Assert.Empty(ticket.StatusChanges);
+        Assert.Equal(0, repository.UpdateCount);
     }
 
     [Fact]
@@ -221,9 +254,7 @@ public sealed class TicketServiceTests
 
         public TicketListQuery? LastListQuery { get; private set; }
 
-        public Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetPageAsync(
-            TicketListQuery query,
-            CancellationToken cancellationToken)
+        public Task<TicketPage> GetPageAsync(TicketListQuery query, CancellationToken cancellationToken)
         {
             LastListQuery = query;
             var summary = new TicketSummary(
@@ -231,7 +262,7 @@ public sealed class TicketServiceTests
                 Tickets.Count(ticket => ticket.Status == TicketStatus.InProgress),
                 Tickets.Count(ticket => ticket.Status == TicketStatus.Resolved),
                 Tickets.Count(ticket => ticket.Priority == TicketPriority.High));
-            return Task.FromResult(((IReadOnlyList<Ticket>)Tickets, Tickets.Count, summary));
+            return Task.FromResult(new TicketPage(Tickets, Tickets.Count, summary));
         }
 
         public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)

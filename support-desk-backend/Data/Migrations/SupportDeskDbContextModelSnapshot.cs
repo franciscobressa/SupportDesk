@@ -55,6 +55,7 @@ namespace SupportDesk.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<long>("UpdatedAt")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

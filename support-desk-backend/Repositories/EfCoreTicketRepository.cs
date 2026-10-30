@@ -6,9 +6,7 @@ namespace SupportDesk.Api.Repositories;
 
 public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITicketRepository
 {
-    public async Task<(IReadOnlyList<Ticket> Tickets, int TotalCount, TicketSummary Summary)> GetPageAsync(
-        TicketListQuery query,
-        CancellationToken cancellationToken)
+    public async Task<TicketPage> GetPageAsync(TicketListQuery query, CancellationToken cancellationToken)
     {
         var summary = await dbContext.Tickets
             .GroupBy(_ => 1)
@@ -53,7 +51,7 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
                 .Take(query.PageSize)
                 .ToListAsync(cancellationToken);
 
-        return (pageTickets, totalCount, summary);
+        return new TicketPage(pageTickets, totalCount, summary);
     }
 
     public Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -78,13 +76,26 @@ public sealed class EfCoreTicketRepository(SupportDeskDbContext dbContext) : ITi
             dbContext.Tickets.Update(ticket);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await SaveTicketChangesAsync(ticket, cancellationToken);
     }
 
     public async Task DeleteAsync(Ticket ticket, CancellationToken cancellationToken)
     {
         dbContext.Tickets.Remove(ticket);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await SaveTicketChangesAsync(ticket, cancellationToken);
+    }
+
+    private async Task SaveTicketChangesAsync(Ticket ticket, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            // UpdatedAt is a concurrency token: no row matched the value that was loaded.
+            throw new TicketConcurrencyException(ticket.Id, exception);
+        }
     }
 
     private static IOrderedQueryable<Ticket> ApplyOrdering(

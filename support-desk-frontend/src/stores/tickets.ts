@@ -6,6 +6,7 @@ import type {
   TicketPageMetadata,
   TicketSummary,
   TicketWriteRequest,
+  UpdateTicketRequest,
 } from '../types/tickets'
 import {
   createComment,
@@ -123,7 +124,7 @@ export const useTicketsStore = defineStore('tickets', {
       }
     },
 
-    async saveTicket(id: string, ticket: TicketWriteRequest) {
+    async saveTicket(id: string, ticket: UpdateTicketRequest) {
       this.saving = true
       this.mutationError = ''
 

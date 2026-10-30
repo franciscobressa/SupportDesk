@@ -16,4 +16,5 @@ public sealed record UpdateTicketCommand(
     string? CustomerName,
     string? CustomerEmail,
     TicketStatus Status,
-    TicketPriority Priority);
+    TicketPriority Priority,
+    DateTimeOffset ExpectedUpdatedAt);

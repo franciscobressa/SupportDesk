@@ -49,6 +49,10 @@ public sealed class UpdateTicketRequest : TicketWriteRequest
     [Required]
     [EnumDataType(typeof(TicketPriority))]
     public TicketPriority? Priority { get; set; }
+
+    /// <summary>The <c>updatedAt</c> value the client loaded; a mismatch means someone else changed the ticket.</summary>
+    [Required]
+    public DateTimeOffset? ExpectedUpdatedAt { get; set; }
 }
 
 public sealed class CreateCommentRequest

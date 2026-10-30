@@ -2,7 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using SupportDesk.Api.Data;
+using SupportDesk.Api.Domain;
+using SupportDesk.Api.Repositories;
 
 namespace SupportDesk.Api.Tests;
 
@@ -44,6 +47,63 @@ public sealed class TicketsApiTests(TicketApiFactory factory) : IClassFixture<Ti
         var result = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
         Assert.Equal(24, result.GetProperty("totalCount").GetInt32());
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/tickets/{deletedTicketId}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateTicketAsync_ReturnsConflictForStaleVersionAndBadRequestWithoutVersion()
+    {
+        await using var isolatedFactory = new TicketApiFactory();
+        var client = isolatedFactory.CreateClient();
+        var ticket = (await client.GetFromJsonAsync<JsonElement>("/api/tickets")).GetProperty("items")[0];
+        var ticketId = ticket.GetProperty("id").GetGuid();
+        var loadedUpdatedAt = ticket.GetProperty("updatedAt").GetString();
+        object UpdateBody(string title, string? expectedUpdatedAt) => new
+        {
+            title,
+            description = ticket.GetProperty("description").GetString(),
+            customerName = ticket.GetProperty("customerName").GetString(),
+            status = "Closed",
+            priority = "Low",
+            expectedUpdatedAt
+        };
+
+        var firstUpdate = await client.PutAsJsonAsync($"/api/tickets/{ticketId}", UpdateBody("First editor", loadedUpdatedAt));
+        var staleUpdate = await client.PutAsJsonAsync($"/api/tickets/{ticketId}", UpdateBody("Second editor", loadedUpdatedAt));
+        var missingVersion = await client.PutAsJsonAsync($"/api/tickets/{ticketId}", UpdateBody("No version", null));
+
+        Assert.Equal(HttpStatusCode.OK, firstUpdate.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, staleUpdate.StatusCode);
+        Assert.Equal("application/problem+json", staleUpdate.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(HttpStatusCode.BadRequest, missingVersion.StatusCode);
+        var current = await client.GetFromJsonAsync<JsonElement>($"/api/tickets/{ticketId}");
+        Assert.Equal("First editor", current.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task TicketRepository_RejectsSaveWhenTicketChangedAfterItWasLoaded()
+    {
+        await using var isolatedFactory = new TicketApiFactory();
+        _ = isolatedFactory.CreateClient();
+        await using var firstScope = isolatedFactory.Services.CreateAsyncScope();
+        await using var secondScope = isolatedFactory.Services.CreateAsyncScope();
+        var firstRepository = firstScope.ServiceProvider.GetRequiredService<ITicketRepository>();
+        var secondRepository = secondScope.ServiceProvider.GetRequiredService<ITicketRepository>();
+        var ticketId = (await firstRepository.GetPageAsync(
+                new TicketListQuery(null, null, null, TicketSortField.CreatedAt, SortDescending: true, PageSize: 1),
+                CancellationToken.None))
+            .Tickets[0].Id;
+
+        // Both requests load the same version, as two managers opening the ticket at once would.
+        var firstCopy = (await firstRepository.GetByIdAsync(ticketId, CancellationToken.None))!;
+        var secondCopy = (await secondRepository.GetByIdAsync(ticketId, CancellationToken.None))!;
+        firstCopy.Title = "First save";
+        firstCopy.UpdatedAt = firstCopy.UpdatedAt.AddMinutes(1);
+        await firstRepository.UpdateAsync(firstCopy, CancellationToken.None);
+        secondCopy.Title = "Second save";
+        secondCopy.UpdatedAt = secondCopy.UpdatedAt.AddMinutes(2);
+
+        await Assert.ThrowsAsync<TicketConcurrencyException>(
+            () => secondRepository.UpdateAsync(secondCopy, CancellationToken.None));
     }
 
     [Fact]

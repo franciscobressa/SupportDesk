@@ -1,5 +1,3 @@
-using SupportDesk.Api.Domain;
-
 namespace SupportDesk.Api.Domain;
 
 public enum TicketSortField
@@ -23,3 +21,8 @@ public sealed record TicketSummary(
     int InProgress,
     int Resolved,
     int HighPriority);
+
+public sealed record TicketPage(
+    IReadOnlyList<Ticket> Tickets,
+    int TotalCount,
+    TicketSummary Summary);

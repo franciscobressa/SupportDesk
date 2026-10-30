@@ -37,14 +37,15 @@ async function request(path: string, options: RequestInit = {}): Promise<Respons
   })
 
   if (!response.ok) {
-    // Prefer the API's ProblemDetails (first validation message, then detail/title); bodies that are
-    // not JSON keep the generic status message.
+    // Prefer the API's ProblemDetails: the first validation message, otherwise title and detail together
+    // (the title says what happened, the detail what to do). Bodies that are not JSON keep the generic message.
     let message = `Request failed with status ${response.status}.`
 
     try {
       const problem = (await response.json()) as ApiProblem
       const validationMessages = Object.values(problem.errors ?? {}).flat()
-      message = validationMessages[0] ?? problem.detail ?? problem.title ?? message
+      const summary = [problem.title, problem.detail].filter(Boolean).join(' ')
+      message = validationMessages[0] ?? (summary || message)
     } catch (error) {
       if (!(error instanceof SyntaxError)) {
         throw error

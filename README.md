@@ -6,9 +6,25 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 
 ## Screenshots
 
-<img width="1892" height="900" alt="image" src="https://github.com/user-attachments/assets/046c15b5-5a16-4088-9cbd-b1ea2ea24999" />
-<img width="1917" height="897" alt="image" src="https://github.com/user-attachments/assets/af0d087c-793e-4e8a-9738-3a16563d69a6" />
-<img width="1887" height="892" alt="image" src="https://github.com/user-attachments/assets/28681ee6-8227-45d8-a2d6-bac6f8830215" />
+**Dashboard** — queue summary cards that double as filters, search, filters, sorting, and per-row actions.
+
+![Ticket dashboard in light mode](screenshots/dashboard-light.png)
+
+**Dark mode** — the same screen with the dark theme.
+
+![Ticket dashboard in dark mode](screenshots/dashboard-dark.png)
+
+**Ticket details** — ticket information, comments, and status history.
+
+![Ticket details with comments and status history](screenshots/ticket-details.png)
+
+**Edit conflict** — a teammate saved this ticket while it was being edited; the edit is kept on screen instead of silently overwriting their change.
+
+![Edit conflict message with a Load latest version action](screenshots/edit-conflict.png)
+
+**Mobile** — tickets become cards and actions stay reachable on small screens.
+
+<img src="screenshots/dashboard-mobile.png" alt="Dashboard on a phone-sized screen in dark mode" width="300" />
 
 ## Features
 
@@ -24,7 +40,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 - ASP.NET Core Web API with C#.
 - Vue 3 and TypeScript SPA with Vue Router, Pinia, and Tailwind CSS.
 - Persistence: SQLite with EF Core; migrations are applied at startup and 25 demo tickets are seeded only when the database is empty. Timestamps are stored as UTC ticks so SQLite can sort them natively.
-- Backend layers: controllers, application services, and a domain-specific `ITicketRepository` backed by EF Core.
+- Backend layers: controllers, application services, a rich `Ticket` domain model, and a domain-specific `ITicketRepository` backed by EF Core. Architecture tests keep the domain free of EF Core and ASP.NET dependencies.
 - Frontend boundaries: views coordinate route-level state and workflows; `AppShell` owns shared navigation, while focused components render filters, ticket rows, forms, comments, status history, and dialogs. Pinia owns shared ticket state and the API module owns HTTP communication.
 
 ### Design decisions and trade-offs
@@ -34,14 +50,35 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 - Ticket search, filtering, sorting, and server-side pagination run in SQLite. The API returns 10 tickets per page by default and caps requested page sizes at 50.
 - The status timeline records status transitions only; comments remain separate. Authentication is omitted and activity authors use a fixed mock identity, as permitted by the assignment.
 
+## Assumptions
+
+The brief leaves these points open; this is how the app interprets them.
+
+- **One queue, one role.** Every user is a support manager working the same queue. There is no login, so comments and status changes are attributed to a fixed mock author, `Support Manager (mock)`, which the brief allows.
+- **What a ticket needs.** A title, a description, and at least a customer name *or* email (an email must be valid). Limits: title 120 characters, description 5,000, customer name 120, email 254, comment 2,000. New tickets start as `Open` / `Medium` unless another value is chosen.
+- **Status workflow.** Any status can change to any other; the brief defines no transition rules. Only status changes go into the ticket history; edits to other fields update "Last updated" but are not listed as history events.
+- **Comments.** "Managing comments" is implemented as adding and listing them. Comments are append-only, like a conversation log, and cannot be edited or deleted.
+- **Deleting.** Deletion is permanent, asks for confirmation, and removes the ticket's comments and history.
+- **Search and sorting.** Search is a case-insensitive substring match over title, description, customer name, and email. Priority sorts as Low → Medium → High and status as Open → In progress → Resolved → Closed (not alphabetically); ties show the newest ticket first.
+- **Counts.** The summary cards always show queue-wide totals; the list count reflects the active search and filters.
+- **Time.** The server sets every timestamp in UTC; the UI shows it in the viewer's local time.
+- **Concurrent edits.** If a ticket changed after it was opened, saving is rejected (`409 Conflict`) instead of overwriting the newer version.
+- **Demo data.** 25 fictional tickets are seeded only when the database is empty.
+
 ## Extras beyond the brief
 
-- Optimistic concurrency: two managers editing the same ticket cannot silently overwrite each other; the second save gets a conflict message and can load the latest version.
-- Server-side pagination returns only the requested page while preserving filtered result counts; this avoids transferring the full ticket list as it grows.
-- Dashboard filters, sorting, and page are kept in the URL: a manager can open a ticket and come back to the same filtered view, reload, or share the link.
-- Dashboard summary cards show global ticket counts by status and high priority, and act as quick filters for queue triage.
-- Status-change history makes ticket progress auditable in the detail view without mixing status events with customer comments.
-- The public demo is deployed as separate frontend and API projects, with direct Vue Router links supported by the frontend deployment rewrite.
+I picked extras by imagining a support manager who keeps this dashboard open all day.
+
+- **Summary cards that act as filters.** The first question each morning is "what needs attention?". The cards answer it at a glance, and one click filters the list to that group.
+- **Filters kept in the URL.** Managers constantly jump from the list into a ticket and back. Search, filters, sorting, and page survive that round trip, a reload, or a shared link.
+- **Safe concurrent editing.** With several managers on one queue, two people will eventually edit the same ticket. The second save gets a clear conflict message and keeps the edit on screen, rather than silently overwriting a teammate's work.
+- **Status history.** Shows who moved a ticket to which status and when, kept separate from the comment conversation so neither gets noisy.
+- **Server-side pagination.** The browser only receives the page it shows, so the dashboard stays fast as the queue grows.
+- **Light and dark themes.** For long sessions and personal preference; the choice is remembered. Colors come from semantic design tokens, so both themes stay consistent as the UI changes.
+- **Responsive layout.** The full table on wide screens, cards on tablets and phones, with view, edit, and delete always reachable.
+- **Keyboard and screen-reader care.** Dialogs close with Escape, keep focus inside while open, and return it afterwards; icon buttons have accessible names, and the summary cards announce their pressed state.
+- **Engineering quality as a feature.** A rich domain model keeps the ticket rules in one place, and architecture tests enforce the layer boundaries. 42 backend tests cover the domain, use cases, the HTTP contract, and persistence against real SQLite.
+- **Public demo.** Frontend and API are deployed separately, so the app can be tried without a local setup.
 
 The demo API uses SQLite to stay within the assignment's lightweight-persistence scope. Vercel container storage is not durable or shared between instances, so demo changes can disappear or differ between instances; use a managed database before relying on persistent production data.
 

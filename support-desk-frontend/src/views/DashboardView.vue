@@ -151,7 +151,7 @@ onBeforeUnmount(() => {
           <h1 class="mt-2 text-3xl font-bold tracking-tight text-fg-strong">{{ greeting }}, Manager!</h1>
           <p class="mt-2 text-sm text-fg-subtle">Here’s what’s happening with your support queue today.</p>
         </div>
-        <button type="button" class="button-primary self-start sm:self-auto" @click="openCreateDialog">
+        <button type="button" class="button-primary w-full sm:w-auto" @click="openCreateDialog">
           <AppIcon name="plus" class="size-4.5" />
           Create ticket
         </button>

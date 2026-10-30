@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using SupportDesk.Api.Data;
 using SupportDesk.Api.Domain;
-using SupportDesk.Api.Repositories;
+using SupportDesk.Api.Services;
 
 namespace SupportDesk.Api.Tests;
 

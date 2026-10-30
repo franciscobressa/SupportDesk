@@ -112,4 +112,4 @@ Run backend unit and HTTP integration tests (the tests use an isolated in-memory
 dotnet test .\SupportDesk.Api.Tests\SupportDesk.Api.Tests.csproj
 ```
 
-Backend tests cover ticket filtering, ordering, and pagination, create/update/comment/delete rules, status history, request validation, and essential HTTP status codes. The frontend is type-checked during its build and its main workflows have been manually verified.
+Backend tests cover domain rules, layer dependency rules (architecture tests with NetArchTest), ticket filtering, ordering, and pagination, create/update/comment/delete rules, status history, request validation, and essential HTTP status codes. The frontend is type-checked during its build and its main workflows have been manually verified.

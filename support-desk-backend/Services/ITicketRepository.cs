@@ -1,7 +1,11 @@
 using SupportDesk.Api.Domain;
 
-namespace SupportDesk.Api.Repositories;
+namespace SupportDesk.Api.Services;
 
+/// <summary>
+/// Persistence port owned by the application layer: the service defines what it needs, and
+/// infrastructure (<c>Repositories/EfCoreTicketRepository</c>) implements it. Dependencies point inward.
+/// </summary>
 public interface ITicketRepository
 {
     Task<TicketPage> GetPageAsync(TicketListQuery query, CancellationToken cancellationToken);

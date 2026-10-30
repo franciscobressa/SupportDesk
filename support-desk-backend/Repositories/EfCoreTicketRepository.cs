@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using SupportDesk.Api.Data;
 using SupportDesk.Api.Domain;
+using SupportDesk.Api.Services;
 
 namespace SupportDesk.Api.Repositories;
 

@@ -1,5 +1,4 @@
 using SupportDesk.Api.Domain;
-using SupportDesk.Api.Repositories;
 
 namespace SupportDesk.Api.Services;
 

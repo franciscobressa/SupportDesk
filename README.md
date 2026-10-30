@@ -36,6 +36,7 @@ Live Demo: [https://support-desk-frontend-rouge.vercel.app/](https://support-des
 
 ## Extras beyond the brief
 
+- Optimistic concurrency: two managers editing the same ticket cannot silently overwrite each other; the second save gets a conflict message and can load the latest version.
 - Server-side pagination returns only the requested page while preserving filtered result counts; this avoids transferring the full ticket list as it grows.
 - Dashboard filters, sorting, and page are kept in the URL: a manager can open a ticket and come back to the same filtered view, reload, or share the link.
 - Dashboard summary cards show global ticket counts by status and high priority, and act as quick filters for queue triage.
@@ -83,11 +84,11 @@ The SQLite database is created at `support-desk-backend/App_Data/supportdesk.db`
 - `GET /api/tickets`: filter by `status`, `priority`, and `search`; sort by `createdAt`, `priority`, or `status` using `sortDirection=asc|desc`; paginate with `page` (default `1`) and `pageSize` (default `10`, maximum `50`). The response contains `items`, `page`, `pageSize`, `totalCount`, `totalPages`, and global `summary` counts by status and high priority.
 - `GET /api/tickets/{id}`: ticket details, comments, and status history.
 - `POST /api/tickets`: create a ticket.
-- `PUT /api/tickets/{id}`: update a ticket; status changes are recorded in its history.
+- `PUT /api/tickets/{id}`: update a ticket; status changes are recorded in its history. The body includes `expectedUpdatedAt` (the `updatedAt` value the client loaded); if the ticket changed in the meantime the API returns `409 Conflict` instead of overwriting the newer version.
 - `DELETE /api/tickets/{id}`: delete a ticket and its related comments/history.
 - `POST /api/tickets/{id}/comments`: add a comment with a server-assigned mock author and timestamp.
 
-Errors use ASP.NET Core validation problem responses. The API currently uses a fixed mock author and has no authentication.
+Errors use ASP.NET Core `ProblemDetails` responses (`ValidationProblemDetails` for `400`). The API currently uses a fixed mock author and has no authentication.
 
 ## Build and test
 
